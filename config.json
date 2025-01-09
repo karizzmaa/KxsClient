@@ -1,0 +1,20 @@
+{
+    "base_url": "https://kxs.rip",
+    "fileName": "KxsClient.user.js",
+    "match": [
+        "*://survev.io/*",
+        "*://66.179.254.36/*",
+        "*://expandedwater.online/*",
+        "*://localhost:3000/*",
+        "*://surviv.wf/*",
+        "*://resurviv.biz/*",
+        "*://82.67.125.203/*",
+        "*://leia-uwu.github.io/survev/*"
+    ],
+    "grant": [
+        "GM_xmlhttpRequest",
+        "GM_info",
+        "GM.getValue",
+        "GM.setValue"
+    ]
+}
