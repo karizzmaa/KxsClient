@@ -3,6 +3,8 @@
   "version": "1.0.28",
   "main": "index.js",
   "namespace": "https://github.com/Kisakay/KxsClient",
+  "icon": "https://kxs.rip/assets/KysClientLogo.png",
+  "placeholder": "Kxs Client - Survev.io Client",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "commits": "oco --yes; npm version patch; git push;",
