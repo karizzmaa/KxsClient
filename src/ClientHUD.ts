@@ -43,12 +43,295 @@ class KxsClientHUD {
 
     this.setupWeaponBorderHandler();
     this.startUpdateLoop();
+    this.escapeMenu();
+
+    if (this.kxsClient.isKillFeedBlint) {
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', this.initKillFeed);
+      } else {
+        this.initKillFeed()
+      }
+    }
   }
 
-  private initResponsiveHandling() {
-    window.addEventListener('resize', this.handleResize.bind(this));
-    this.handleResize();
+  private initKillFeed() {
+    this.applyCustomStyles();
+    this.setupObserver();
   }
+
+  private escapeMenu() {
+    const customStyles = `
+    .ui-game-menu-desktop {
+        background: linear-gradient(135deg, rgba(25, 25, 35, 0.95) 0%, rgba(15, 15, 25, 0.98) 100%) !important;
+        border: 1px solid rgba(255, 255, 255, 0.1) !important;
+        border-radius: 12px !important;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3) !important;
+        padding: 20px !important;
+        backdrop-filter: blur(10px) !important;
+        max-width: 350px !important;
+        margin: auto !important;
+        box-sizing: border-box !important;
+    }
+
+    .kxs-header {
+        display: flex;
+        align-items: center;
+        justify-content: flex-start;
+        margin-bottom: 20px;
+        padding: 10px;
+        border-bottom: 2px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .kxs-logo {
+        width: 30px;
+        height: 30px;
+        margin-right: 10px;
+        border-radius: 6px;
+    }
+
+    .kxs-title {
+        font-size: 20px;
+        font-weight: 700;
+        color: #ffffff;
+        text-transform: uppercase;
+        text-shadow: 0 0 10px rgba(66, 135, 245, 0.5);
+        font-family: 'Arial', sans-serif;
+        letter-spacing: 2px;
+    }
+
+    .kxs-title span {
+        color: #4287f5;
+    }
+        
+    
+    .btn-game-menu {
+        background: linear-gradient(135deg, rgba(66, 135, 245, 0.1) 0%, rgba(66, 135, 245, 0.2) 100%) !important;
+        border: 1px solid rgba(66, 135, 245, 0.3) !important;
+        border-radius: 8px !important;
+        color: #ffffff !important;
+        transition: all 0.3s ease !important;
+        margin: 5px 0 !important;
+        padding: 12px !important;
+        font-weight: 600 !important;
+        width: 100% !important;
+        text-align: center !important;
+        display: block !important;
+        box-sizing: border-box !important;
+    }
+
+    .btn-game-menu:hover {
+        background: linear-gradient(135deg, rgba(66, 135, 245, 0.2) 0%, rgba(66, 135, 245, 0.3) 100%) !important;
+        transform: translateY(-2px) !important;
+        box-shadow: 0 4px 12px rgba(66, 135, 245, 0.2) !important;
+    }
+
+    .slider-container {
+        background: rgba(66, 135, 245, 0.1) !important;
+        border-radius: 8px !important;
+        padding: 10px 15px !important;
+        margin: 10px 0 !important;
+        width: 100% !important;
+        box-sizing: border-box !important;
+    }
+
+    .slider-text {
+        color: #ffffff !important;
+        font-size: 14px !important;
+        margin-bottom: 8px !important;
+        text-align: center !important;
+    }
+
+    .slider {
+        -webkit-appearance: none !important;
+        width: 100% !important;
+        height: 6px !important;
+        border-radius: 3px !important;
+        background: rgba(66, 135, 245, 0.3) !important;
+        outline: none !important;
+        margin: 10px 0 !important;
+    }
+
+    .slider::-webkit-slider-thumb {
+        -webkit-appearance: none !important;
+        width: 16px !important;
+        height: 16px !important;
+        border-radius: 50% !important;
+        background: #4287f5 !important;
+        cursor: pointer !important;
+        transition: all 0.3s ease !important;
+    }
+
+    .slider::-webkit-slider-thumb:hover {
+        transform: scale(1.2) !important;
+        box-shadow: 0 0 10px rgba(66, 135, 245, 0.5) !important;
+    }
+
+    .btns-game-double-row {
+        display: flex !important;
+        justify-content: center !important;
+        gap: 10px !important;
+        margin-bottom: 10px !important;
+        width: 100% !important;
+    }
+
+    .btn-game-container {
+        flex: 1 !important;
+    }
+    `;
+
+    const addCustomStyles = (): void => {
+      const styleElement = document.createElement('style');
+      styleElement.textContent = customStyles;
+      document.head.appendChild(styleElement);
+    };
+
+    const addKxsHeader = (): void => {
+      const menuContainer = document.querySelector('#ui-game-menu') as HTMLElement;
+      if (!menuContainer) return;
+
+      const header = document.createElement('div');
+      header.className = 'kxs-header';
+
+      const title = document.createElement('span');
+      title.className = 'kxs-title';
+      title.innerHTML = '<span>Kxs</span> CLIENT';
+      header.appendChild(title);
+      menuContainer.insertBefore(header, menuContainer.firstChild);
+    };
+
+    if (document.querySelector('#ui-game-menu')) {
+      addCustomStyles();
+      addKxsHeader();
+    }
+  }
+
+  private handleMessage(element: Element) {
+    if (element instanceof HTMLElement && element.classList.contains('killfeed-div')) {
+      const killfeedText = element.querySelector('.killfeed-text');
+      if (killfeedText instanceof HTMLElement) {
+        if (killfeedText.textContent && killfeedText.textContent.trim() !== '') {
+          if (!killfeedText.hasAttribute('data-glint')) {
+            killfeedText.setAttribute('data-glint', 'true');
+
+            element.style.opacity = '1';
+
+            setTimeout(() => {
+              element.style.opacity = '0';
+            }, 5000);
+          }
+        } else {
+          element.style.opacity = '0';
+        }
+      }
+    }
+  }
+
+  private setupObserver() {
+    const killfeedContents = document.getElementById('ui-killfeed-contents');
+    if (killfeedContents) {
+      const observer = new MutationObserver((mutations) => {
+        mutations.forEach((mutation) => {
+          if (mutation.target instanceof HTMLElement &&
+            mutation.target.classList.contains('killfeed-text')) {
+            const parentDiv = mutation.target.closest('.killfeed-div');
+            if (parentDiv) {
+              this.handleMessage(parentDiv);
+            }
+          }
+          mutation.addedNodes.forEach((node) => {
+            if (node instanceof HTMLElement) {
+              this.handleMessage(node);
+            }
+          });
+        });
+      });
+
+      observer.observe(killfeedContents, {
+        childList: true,
+        subtree: true,
+        characterData: true,
+        attributes: true,
+        attributeFilter: ['style', 'class']
+      });
+
+      killfeedContents.querySelectorAll('.killfeed-div').forEach(this.handleMessage);
+    }
+  }
+
+  private applyCustomStyles() {
+    const customStyles = document.createElement('style');
+    if (this.kxsClient.isKillFeedBlint) {
+      customStyles.innerHTML = `
+        @import url('https://fonts.googleapis.com/css2?family=Oxanium:wght@600&display=swap');
+  
+        .killfeed-div {
+            position: absolute !important;
+            padding: 5px 10px !important;
+            background: rgba(0, 0, 0, 0.7) !important;
+            border-radius: 5px !important;
+            transition: opacity 0.5s ease-out !important;
+        }
+  
+        .killfeed-text {
+            font-family: 'Oxanium', sans-serif !important;
+            font-weight: bold !important;
+            font-size: 16px !important;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5) !important;
+            background: linear-gradient(90deg, 
+                rgb(255, 0, 0), 
+                rgb(255, 127, 0), 
+                rgb(255, 255, 0), 
+                rgb(0, 255, 0), 
+                rgb(0, 0, 255), 
+                rgb(75, 0, 130), 
+                rgb(148, 0, 211), 
+                rgb(255, 0, 0));
+            background-size: 200%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            animation: glint 3s linear infinite;
+        }
+  
+        @keyframes glint {
+            0% {
+                background-position: 200% 0;
+            }
+            100% {
+                background-position: -200% 0;
+            }
+        }
+  
+        .killfeed-div .killfeed-text:empty {
+            display: none !important;
+        }
+      `;
+    } else {
+      customStyles.innerHTML = `
+        .killfeed-div {
+            position: absolute;
+            padding: 5px 10px;
+            background: rgba(0, 0, 0, 0.7);
+            border-radius: 5px;
+            transition: opacity 0.5s ease-out;
+        }
+  
+        .killfeed-text {
+            font-family: inherit;
+            font-weight: normal;
+            font-size: inherit;
+            color: inherit;
+            text-shadow: none;
+            background: none;
+        }
+  
+        .killfeed-div .killfeed-text:empty {
+            display: none;
+        }
+      `;
+    }
+    document.head.appendChild(customStyles);
+  }
+
 
   private handleResize() {
     const viewportWidth = window.innerWidth;
@@ -86,7 +369,6 @@ class KxsClientHUD {
   ): CounterPosition {
     let { left, top } = currentPosition;
 
-    // Ajuster la position horizontale si nécessaire
     if (left + elementWidth > viewportWidth) {
       left = viewportWidth - elementWidth;
     }
@@ -94,7 +376,6 @@ class KxsClientHUD {
       left = 0;
     }
 
-    // Ajuster la position verticale si nécessaire
     if (top + elementHeight > viewportHeight) {
       top = viewportHeight - elementHeight;
     }

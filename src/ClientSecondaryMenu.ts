@@ -140,6 +140,16 @@ class KxsLegacyClientSecondaryMenu {
       },
     });
 
+    this.addOption(HUD, {
+      label: "Kill Feed Blint Text",
+      value: this.kxsClient.isKillFeedBlint,
+      type: "toggle",
+      onChange: (value) => {
+        this.kxsClient.isKillFeedBlint = !this.kxsClient.isKillFeedBlint
+        this.kxsClient.updateLocalStorage()
+      },
+    });
+
     let musicSection = this.addSection("Music");
 
     this.addOption(musicSection, {

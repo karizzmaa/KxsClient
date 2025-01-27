@@ -26,6 +26,7 @@ export default class KxsClient {
   isWinningAnimationEnabled: boolean;
   isKillLeaderTrackerEnabled: boolean;
   isLegaySecondaryMenu: boolean;
+  isKillFeedBlint: boolean;
 
   currentServer: string | null | undefined;
   discordRPC: DiscordWebSocket
@@ -63,6 +64,7 @@ export default class KxsClient {
     this.isWinningAnimationEnabled = true;
     this.isKillLeaderTrackerEnabled = true;
     this.isLegaySecondaryMenu = true;
+    this.isKillFeedBlint = false;
     this.discordToken = null;
     this.counters = {};
 
@@ -142,7 +144,8 @@ export default class KxsClient {
         isWinningAnimationEnabled: this.isWinningAnimationEnabled,
         discordToken: this.discordToken,
         isKillLeaderTrackerEnabled: this.isKillLeaderTrackerEnabled,
-        isLegaySecondaryMenu: this.isLegaySecondaryMenu
+        isLegaySecondaryMenu: this.isLegaySecondaryMenu,
+        isKillFeedBlint: this.isKillFeedBlint,
       }),
     );
   };
@@ -591,6 +594,7 @@ export default class KxsClient {
       this.discordToken = savedSettings.discordToken ?? this.discordToken;
       this.isKillLeaderTrackerEnabled = savedSettings.isKillLeaderTrackerEnabled ?? this.isKillLeaderTrackerEnabled;
       this.isLegaySecondaryMenu = savedSettings.isLegaySecondaryMenu ?? this.isLegaySecondaryMenu
+      this.isKillFeedBlint = savedSettings.isKillFeedBlint ?? this.isKillFeedBlint;
     }
 
     this.updateKillsVisibility();
