@@ -590,121 +590,54 @@ class KxsClientHUD {
     const weaponNames = Array.from(
       document.getElementsByClassName("ui-weapon-name"),
     );
+
+    type ColorKey = 'ORANGE' | 'BLUE' | 'GREEN' | 'RED' | 'BLACK' | 'OLIVE' | 'ORANGE_RED' | 'PURPLE' | 'TEAL' | 'BROWN' | 'PINK' | 'DEFAULT';
+
+    const WEAPON_COLORS: Record<ColorKey, string> = {
+      ORANGE: '#FFAE00',
+      BLUE: '#007FFF',
+      GREEN: '#0f690d',
+      RED: '#FF0000',
+      BLACK: '#000000',
+      OLIVE: '#808000',
+      ORANGE_RED: '#FF4500',
+      PURPLE: '#800080',
+      TEAL: '#008080',
+      BROWN: '#A52A2A',
+      PINK: '#FFC0CB',
+      DEFAULT: '#FFFFFF'
+    };
+    
+    const WEAPON_COLOR_MAPPING: Record<ColorKey, string[]> = {
+      ORANGE: ['CZ-3A1', 'G18C', 'M9', 'M93R', 'MAC-10', 'MP5', 'P30L', 'DUAL P30L', 'UMP9', 'VECTOR', 'VSS', 'FLAMETHROWER'],
+      BLUE: ['AK-47', 'OT-38', 'OTS-38', 'M39 EMR', 'DP-28', 'MOSIN-NAGANT', 'SCAR-H', 'SV-98', 'M1 GARAND', 'PKP PECHENEG', 'AN-94', 'BAR M1918', 'BLR 81', 'SVD-63', 'M134', 'WATER GUN', 'GROZA', 'GROZA-S'],
+      GREEN: ['FAMAS', 'M416', 'M249', 'QBB-97', 'MK 12 SPR', 'M4A1-S', 'SCOUT ELITE', 'L86A2'],
+      RED: ['M870', 'MP220', 'SAIGA-12', 'SPAS-12', 'USAS-12', 'SUPER 90', 'LASR GUN', 'M1100'],
+      BLACK: ['DEAGLE 50', 'RAINBOW BLASTER'],
+      OLIVE: ['AWM-S', 'MK 20 SSR'],
+      ORANGE_RED: ['FLARE GUN'],
+      PURPLE: ['MODEL 94', 'PEACEMAKER', 'VECTOR (.45 ACP)', 'M1911', 'M1A1', 'MK45G'],
+      TEAL: ['M79'],
+      BROWN: ['POTATO CANNON', 'SPUD GUN'],
+      PINK: ['HEART CANNON'],
+      DEFAULT: []
+    };
+    
     weaponNames.forEach((weaponNameElement) => {
       const weaponContainer = weaponNameElement.closest(".ui-weapon-switch");
+      
       const observer = new MutationObserver(() => {
-        const weaponName = weaponNameElement.textContent?.trim()!;
-        let border = "#FFFFFF";
-
-        switch (weaponName.toUpperCase()) {
-          case "CZ-3A1":
-          case "G18C":
-          case "M9":
-          case "M93R":
-          case "MAC-10":
-          case "MP5":
-          case "P30L":
-          case "DUAL P30L":
-          case "UMP9":
-          case "VECTOR":
-          case "VSS":
-          case "FLAMETHROWER":
-            border = "#FFAE00";
-            break;
-
-          case "AK-47":
-          case "OT-38":
-          case "OTS-38":
-          case "M39 EMR":
-          case "DP-28":
-          case "MOSIN-NAGANT":
-          case "SCAR-H":
-          case "SV-98":
-          case "M1 GARAND":
-          case "PKP PECHENEG":
-          case "AN-94":
-          case "BAR M1918":
-          case "BLR 81":
-          case "SVD-63":
-          case "M134":
-          case "WATER GUN":
-          case "GROZA":
-          case "GROZA-S":
-            border = "#007FFF";
-            break;
-
-          case "FAMAS":
-          case "M416":
-          case "M249":
-          case "QBB-97":
-          case "MK 12 SPR":
-          case "M4A1-S":
-          case "SCOUT ELITE":
-          case "L86A2":
-            border = "#0f690d";
-            break;
-
-          case "M870":
-          case "MP220":
-          case "SAIGA-12":
-          case "SPAS-12":
-          case "USAS-12":
-          case "SUPER 90":
-          case "LASR GUN":
-          case "M1100":
-            border = "#FF0000";
-            break;
-
-          case "DEAGLE 50":
-          case "RAINBOW BLASTER":
-            border = "#000000";
-            break;
-
-          case "AWM-S":
-          case "MK 20 SSR":
-            border = "#808000";
-            break;
-
-          case "FLARE GUN":
-            border = "#FF4500";
-            break;
-
-          case "MODEL 94":
-          case "PEACEMAKER":
-          case "VECTOR (.45 ACP)":
-          case "M1911":
-          case "M1A1":
-            border = "#800080";
-            break;
-
-          case "M79":
-            border = "#008080";
-            break;
-
-          case "POTATO CANNON":
-          case "SPUD GUN":
-            border = "#A52A2A";
-            break;
-
-          case "HEART CANNON":
-            border = "#FFC0CB";
-            break;
-
-          default:
-            border = "#FFFFFF";
-            break;
-        }
-
+        const weaponName = weaponNameElement.textContent?.trim()?.toUpperCase() || '';
+        
+        const colorKey = (Object.entries(WEAPON_COLOR_MAPPING)
+          .find(([_, weapons]) => weapons.includes(weaponName))?.[0] || 'DEFAULT') as ColorKey;
+        
         if (weaponContainer && weaponContainer.id !== "ui-weapon-id-4") {
-          (weaponContainer as HTMLElement).style.border = `3px solid ${border}`;
+          (weaponContainer as HTMLElement).style.border = `3px solid ${WEAPON_COLORS[colorKey]}`;
         }
       });
-
-      observer.observe(weaponNameElement, {
-        childList: true,
-        characterData: true,
-        subtree: true,
-      });
+      
+      observer.observe(weaponNameElement, { childList: true, characterData: true, subtree: true });
     });
   }
 
