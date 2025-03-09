@@ -27,25 +27,25 @@ intercept('img/survev_logo_full.png', kxs_logo);
 
 const uiStatsLogo = document.querySelector('#ui-stats-logo') as HTMLElement | null;
 if (uiStatsLogo) {
-    uiStatsLogo.style.backgroundImage = "url('https://kxs.rip/assets/KysClientLogo.png')";
+	uiStatsLogo.style.backgroundImage = "url('https://kxs.rip/assets/KysClientLogo.png')";
 }
 const newChangelogUrl = config.base_url;
 const startBottomMiddle = document.getElementById("start-bottom-middle");
 
 if (startBottomMiddle) {
-    const links = startBottomMiddle.getElementsByTagName("a");
+	const links = startBottomMiddle.getElementsByTagName("a");
 
-    for (let i = 0; i < links.length; i++) {
-        const link = links[i];
+	for (let i = 0; i < links.length; i++) {
+		const link = links[i];
 
-        if (link.href.includes("changelogRec.html") || link.href.includes("changelog.html")) {
-            link.href = newChangelogUrl;
-            link.textContent = packageInfo.version;
-        }
-        if (i === 1) {
-            link.remove();
-        }
-    }
+		if (link.href.includes("changelogRec.html") || link.href.includes("changelog.html")) {
+			link.href = newChangelogUrl;
+			link.textContent = packageInfo.version;
+		}
+		if (i === 1) {
+			link.remove();
+		}
+	}
 }
 
 const kxsClient = new KxsClient();

@@ -1,24 +1,24 @@
 import KxsClient from "./KxsClient";
 
 class HealthWarning {
-  private warningElement: HTMLDivElement | null;
-  private offsetX: number = 20; // Distance depuis le curseur
-  private offsetY: number = 20;
-  kxsClient: KxsClient;
+	private warningElement: HTMLDivElement | null;
+	private offsetX: number = 20; // Distance depuis le curseur
+	private offsetY: number = 20;
+	kxsClient: KxsClient;
 
-  constructor(kxsClient: KxsClient) {
-    this.warningElement = null;
-    this.kxsClient = kxsClient;
+	constructor(kxsClient: KxsClient) {
+		this.warningElement = null;
+		this.kxsClient = kxsClient;
 
-    this.createWarningElement();
-    this.initMouseTracking();
-  }
+		this.createWarningElement();
+		this.initMouseTracking();
+	}
 
-  private createWarningElement() {
-    const warning = document.createElement("div");
-    const uiTopLeft = document.getElementById("ui-top-left");
+	private createWarningElement() {
+		const warning = document.createElement("div");
+		const uiTopLeft = document.getElementById("ui-top-left");
 
-    warning.style.cssText = `
+		warning.style.cssText = `
             position: fixed;
             background: rgba(0, 0, 0, 0.8);
             border: 2px solid #ff0000;
@@ -34,15 +34,15 @@ class HealthWarning {
             pointer-events: none;
         `;
 
-    const content = document.createElement("div");
-    content.style.cssText = `
+		const content = document.createElement("div");
+		content.style.cssText = `
             display: flex;
             align-items: center;
             gap: 8px;
         `;
 
-    const icon = document.createElement("div");
-    icon.innerHTML = `
+		const icon = document.createElement("div");
+		icon.innerHTML = `
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <circle cx="12" cy="12" r="10"></circle>
                 <line x1="12" y1="8" x2="12" y2="12"></line>
@@ -50,78 +50,78 @@ class HealthWarning {
             </svg>
         `;
 
-    const text = document.createElement("span");
-    text.textContent = "LOW HP!";
+		const text = document.createElement("span");
+		text.textContent = "LOW HP!";
 
-    if (uiTopLeft) {
-      content.appendChild(icon);
-      content.appendChild(text);
-      warning.appendChild(content);
-      uiTopLeft.appendChild(warning);
-    }
-    this.warningElement = warning;
-    this.addPulseAnimation();
-  }
+		if (uiTopLeft) {
+			content.appendChild(icon);
+			content.appendChild(text);
+			warning.appendChild(content);
+			uiTopLeft.appendChild(warning);
+		}
+		this.warningElement = warning;
+		this.addPulseAnimation();
+	}
 
-  private initMouseTracking() {
-    document.addEventListener("mousemove", (e: MouseEvent) => {
-      if (!this.warningElement || this.warningElement.style.display === "none")
-        return;
+	private initMouseTracking() {
+		document.addEventListener("mousemove", (e: MouseEvent) => {
+			if (!this.warningElement || this.warningElement.style.display === "none")
+				return;
 
-      const x = e.clientX + this.offsetX;
-      const y = e.clientY + this.offsetY;
+			const x = e.clientX + this.offsetX;
+			const y = e.clientY + this.offsetY;
 
-      // Empêcher l'alerte de sortir de l'écran
-      const rect = this.warningElement.getBoundingClientRect();
-      const maxX = window.innerWidth - rect.width;
-      const maxY = window.innerHeight - rect.height;
+			// Empêcher l'alerte de sortir de l'écran
+			const rect = this.warningElement.getBoundingClientRect();
+			const maxX = window.innerWidth - rect.width;
+			const maxY = window.innerHeight - rect.height;
 
-      const finalX = Math.min(Math.max(0, x), maxX);
-      const finalY = Math.min(Math.max(0, y), maxY);
+			const finalX = Math.min(Math.max(0, x), maxX);
+			const finalY = Math.min(Math.max(0, y), maxY);
 
-      this.warningElement.style.transform = `translate(${finalX}px, ${finalY}px)`;
-    });
-  }
+			this.warningElement.style.transform = `translate(${finalX}px, ${finalY}px)`;
+		});
+	}
 
-  private addPulseAnimation() {
-    const keyframes = `
+	private addPulseAnimation() {
+		const keyframes = `
             @keyframes pulse {
                 0% { opacity: 1; }
                 50% { opacity: 0.5; }
                 100% { opacity: 1; }
             }
         `;
-    const style = document.createElement("style");
-    style.textContent = keyframes;
-    document.head.appendChild(style);
+		const style = document.createElement("style");
+		style.textContent = keyframes;
+		document.head.appendChild(style);
 
-    if (this.warningElement) {
-      this.warningElement.style.animation = "pulse 1.5s infinite";
-    }
-  }
+		if (this.warningElement) {
+			this.warningElement.style.animation = "pulse 1.5s infinite";
+		}
+	}
 
-  public show(health: number) {
-    if (!this.warningElement) return;
-    this.warningElement.style.display = "block";
+	public show(health: number) {
+		if (!this.warningElement) return;
+		this.warningElement.style.display = "block";
 
-    const span = this.warningElement.querySelector("span");
-    if (span) {
-      span.textContent = `LOW HP: ${health}%`;
-    }
-  }
+		const span = this.warningElement.querySelector("span");
+		if (span) {
+			span.textContent = `LOW HP: ${health}%`;
+		}
+	}
 
-  public hide() {
-    if (!this.warningElement) return;
-    this.warningElement.style.display = "none";
-  }
+	public hide() {
+		if (!this.warningElement) return;
+		this.warningElement.style.display = "none";
+	}
 
-  public update(health: number) {
-    if (health <= 30 && health > 0) {
-      this.show(health);
-    } else {
-      this.hide();
-    }
-  }
+	public update(health: number) {
+		if (health <= 30 && health > 0) {
+			this.show(health);
+		} else {
+			this.hide();
+		}
+	}
 }
 
 export { HealthWarning };

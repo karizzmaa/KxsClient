@@ -2,65 +2,169 @@ import KxsClient from "./KxsClient";
 import { PingManager } from "./Ping";
 
 interface HealthChangeAnimation {
-  element: HTMLElement;
-  startTime: number;
-  duration: number;
-  value: number;
+	element: HTMLElement;
+	startTime: number;
+	duration: number;
+	value: number;
 }
 
 interface CounterPosition {
-  left: number;
-  top: number;
+	left: number;
+	top: number;
 }
 
 class KxsClientHUD {
-  frameCount: number;
-  fps: number;
-  kills: number;
-  private pingManager: PingManager;
-  isMenuVisible: boolean;
-  kxsClient: KxsClient;
-  private healthAnimations: HealthChangeAnimation[] = [];
-  private lastHealthValue: number = 100;
+	frameCount: number;
+	fps: number;
+	kills: number;
+	private pingManager: PingManager;
+	isMenuVisible: boolean;
+	kxsClient: KxsClient;
+	private healthAnimations: HealthChangeAnimation[] = [];
+	private lastHealthValue: number = 100;
 
-  constructor(kxsClient: KxsClient) {
-    this.kxsClient = kxsClient;
-    this.frameCount = 0;
-    this.fps = 0;
-    this.kills = 0;
-    this.isMenuVisible = true;
-    this.pingManager = new PingManager();
+	constructor(kxsClient: KxsClient) {
+		this.kxsClient = kxsClient;
+		this.frameCount = 0;
+		this.fps = 0;
+		this.kills = 0;
+		this.isMenuVisible = true;
+		this.pingManager = new PingManager();
 
-    if (this.kxsClient.isPingVisible) {
-      this.initCounter("ping", "Ping", "45ms");
-    }
-    if (this.kxsClient.isFpsVisible) {
-      this.initCounter("fps", "FPS", "60");
-    }
-    if (this.kxsClient.isKillsVisible) {
-      this.initCounter("kills", "Kills", "0");
-    }
+		if (this.kxsClient.isPingVisible) {
+			this.initCounter("ping", "Ping", "45ms");
+		}
+		if (this.kxsClient.isFpsVisible) {
+			this.initCounter("fps", "FPS", "60");
+		}
+		if (this.kxsClient.isKillsVisible) {
+			this.initCounter("kills", "Kills", "0");
+		}
 
-    this.setupWeaponBorderHandler();
-    this.startUpdateLoop();
-    this.escapeMenu();
+		this.setupWeaponBorderHandler();
+		this.startUpdateLoop();
+		this.escapeMenu();
+		this.initFriendDetector();
 
-    if (this.kxsClient.isKillFeedBlint) {
-      if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', this.initKillFeed);
-      } else {
-        this.initKillFeed()
-      }
-    }
-  }
+		if (this.kxsClient.isKillFeedBlint) {
+			if (document.readyState === 'loading') {
+				document.addEventListener('DOMContentLoaded', this.initKillFeed);
+			} else {
+				this.initKillFeed()
+			}
+		}
+	}
 
-  private initKillFeed() {
-    this.applyCustomStyles();
-    this.setupObserver();
-  }
+	private initFriendDetector() {
+		// Initialize friends list
+		let all_friends = this.kxsClient.all_friends.split(',') || [];
+		console.log(all_friends, "Friends list initialized");
 
-  private escapeMenu() {
-    const customStyles = `
+		if (all_friends.length >= 1) {
+			// Create a cache for detected friends
+			// Structure will be: { "friendName": timestamp }
+			const friendsCache = {};
+			// Cache duration in milliseconds (4 minutes = 240000 ms)
+			const cacheDuration = 4 * 60 * 1000;
+
+			// Select the element containing kill feeds
+			const killfeedContents = document.querySelector('#ui-killfeed-contents');
+
+			if (killfeedContents) {
+				// Keep track of last seen content for each div
+				const lastSeenContent = {
+					"ui-killfeed-0": "",
+					"ui-killfeed-1": "",
+					"ui-killfeed-2": "",
+					"ui-killfeed-3": "",
+					"ui-killfeed-4": "",
+					"ui-killfeed-5": ""
+				};
+
+				// Function to check if a friend is in the text with cache management
+				const checkForFriends = (text: string, divId: string) => {
+					// If the text is identical to the last seen, ignore
+					// @ts-ignore
+					if (text === lastSeenContent[divId]) return;
+
+					// Update the last seen content
+					// @ts-ignore
+					lastSeenContent[divId] = text;
+
+					// Ignore empty messages
+					if (!text.trim()) return;
+
+					// Current timestamp
+					const currentTime = Date.now();
+
+					// Check if a friend is mentioned
+					for (let friend of all_friends) {
+						if (text.includes(friend)) {
+							// Check if the friend is in the cache and if the cache is still valid
+							// @ts-ignore
+							const lastSeen = friendsCache[friend];
+							if (!lastSeen || (currentTime - lastSeen > cacheDuration)) {
+								// Update the cache
+								// @ts-ignore
+								friendsCache[friend] = currentTime;
+
+								// Display notification
+								this.kxsClient.nm.showNotification(
+									`[FriendDetector] ${friend} is in this game`,
+									"info",
+									2300
+								);
+							}
+							break;
+						}
+					}
+				};
+
+				// Function to check all kill feeds
+				const checkAllKillfeeds = () => {
+					for (let i = 0; i <= 5; i++) {
+						const divId = `ui-killfeed-${i}`;
+						const killDiv = document.getElementById(divId);
+
+						if (killDiv) {
+							const textElement = killDiv.querySelector('.killfeed-text');
+							if (textElement && textElement.textContent) {
+								checkForFriends(textElement.textContent, divId);
+							}
+						}
+					}
+				};
+
+				// Observe style or text changes in the entire container
+				const observer = new MutationObserver(() => {
+					checkAllKillfeeds();
+				});
+
+				// Start observing with a configuration that detects all changes
+				observer.observe(killfeedContents, {
+					childList: true,    // Observe changes to child elements
+					subtree: true,      // Observe the entire tree
+					characterData: true, // Observe text changes
+					attributes: true    // Observe attribute changes (like style/opacity)
+				});
+
+				// Check current content immediately
+				checkAllKillfeeds();
+
+				console.log("Friend detector initialized with 4-minute cache");
+			} else {
+				console.warn("Killfeed-contents element not found");
+			}
+		}
+	}
+
+	private initKillFeed() {
+		this.applyCustomStyles();
+		this.setupObserver();
+	}
+
+	private escapeMenu() {
+		const customStyles = `
     .ui-game-menu-desktop {
         background: linear-gradient(135deg, rgba(25, 25, 35, 0.95) 0%, rgba(15, 15, 25, 0.98) 100%) !important;
         border: 1px solid rgba(255, 255, 255, 0.1) !important;
@@ -179,89 +283,89 @@ class KxsClientHUD {
     }
     `;
 
-    const addCustomStyles = (): void => {
-      const styleElement = document.createElement('style');
-      styleElement.textContent = customStyles;
-      document.head.appendChild(styleElement);
-    };
+		const addCustomStyles = (): void => {
+			const styleElement = document.createElement('style');
+			styleElement.textContent = customStyles;
+			document.head.appendChild(styleElement);
+		};
 
-    const addKxsHeader = (): void => {
-      const menuContainer = document.querySelector('#ui-game-menu') as HTMLElement;
-      if (!menuContainer) return;
+		const addKxsHeader = (): void => {
+			const menuContainer = document.querySelector('#ui-game-menu') as HTMLElement;
+			if (!menuContainer) return;
 
-      const header = document.createElement('div');
-      header.className = 'kxs-header';
+			const header = document.createElement('div');
+			header.className = 'kxs-header';
 
-      const title = document.createElement('span');
-      title.className = 'kxs-title';
-      title.innerHTML = '<span>Kxs</span> CLIENT';
-      header.appendChild(title);
-      menuContainer.insertBefore(header, menuContainer.firstChild);
-    };
+			const title = document.createElement('span');
+			title.className = 'kxs-title';
+			title.innerHTML = '<span>Kxs</span> CLIENT';
+			header.appendChild(title);
+			menuContainer.insertBefore(header, menuContainer.firstChild);
+		};
 
-    if (document.querySelector('#ui-game-menu')) {
-      addCustomStyles();
-      addKxsHeader();
-    }
-  }
+		if (document.querySelector('#ui-game-menu')) {
+			addCustomStyles();
+			addKxsHeader();
+		}
+	}
 
-  private handleMessage(element: Element) {
-    if (element instanceof HTMLElement && element.classList.contains('killfeed-div')) {
-      const killfeedText = element.querySelector('.killfeed-text');
-      if (killfeedText instanceof HTMLElement) {
-        if (killfeedText.textContent && killfeedText.textContent.trim() !== '') {
-          if (!killfeedText.hasAttribute('data-glint')) {
-            killfeedText.setAttribute('data-glint', 'true');
+	private handleMessage(element: Element) {
+		if (element instanceof HTMLElement && element.classList.contains('killfeed-div')) {
+			const killfeedText = element.querySelector('.killfeed-text');
+			if (killfeedText instanceof HTMLElement) {
+				if (killfeedText.textContent && killfeedText.textContent.trim() !== '') {
+					if (!killfeedText.hasAttribute('data-glint')) {
+						killfeedText.setAttribute('data-glint', 'true');
 
-            element.style.opacity = '1';
+						element.style.opacity = '1';
 
-            setTimeout(() => {
-              element.style.opacity = '0';
-            }, 5000);
-          }
-        } else {
-          element.style.opacity = '0';
-        }
-      }
-    }
-  }
+						setTimeout(() => {
+							element.style.opacity = '0';
+						}, 5000);
+					}
+				} else {
+					element.style.opacity = '0';
+				}
+			}
+		}
+	}
 
-  private setupObserver() {
-    const killfeedContents = document.getElementById('ui-killfeed-contents');
-    if (killfeedContents) {
-      const observer = new MutationObserver((mutations) => {
-        mutations.forEach((mutation) => {
-          if (mutation.target instanceof HTMLElement &&
-            mutation.target.classList.contains('killfeed-text')) {
-            const parentDiv = mutation.target.closest('.killfeed-div');
-            if (parentDiv) {
-              this.handleMessage(parentDiv);
-            }
-          }
-          mutation.addedNodes.forEach((node) => {
-            if (node instanceof HTMLElement) {
-              this.handleMessage(node);
-            }
-          });
-        });
-      });
+	private setupObserver() {
+		const killfeedContents = document.getElementById('ui-killfeed-contents');
+		if (killfeedContents) {
+			const observer = new MutationObserver((mutations) => {
+				mutations.forEach((mutation) => {
+					if (mutation.target instanceof HTMLElement &&
+						mutation.target.classList.contains('killfeed-text')) {
+						const parentDiv = mutation.target.closest('.killfeed-div');
+						if (parentDiv) {
+							this.handleMessage(parentDiv);
+						}
+					}
+					mutation.addedNodes.forEach((node) => {
+						if (node instanceof HTMLElement) {
+							this.handleMessage(node);
+						}
+					});
+				});
+			});
 
-      observer.observe(killfeedContents, {
-        childList: true,
-        subtree: true,
-        characterData: true,
-        attributes: true,
-        attributeFilter: ['style', 'class']
-      });
+			observer.observe(killfeedContents, {
+				childList: true,
+				subtree: true,
+				characterData: true,
+				attributes: true,
+				attributeFilter: ['style', 'class']
+			});
 
-      killfeedContents.querySelectorAll('.killfeed-div').forEach(this.handleMessage);
-    }
-  }
+			killfeedContents.querySelectorAll('.killfeed-div').forEach(this.handleMessage);
+		}
+	}
 
-  private applyCustomStyles() {
-    const customStyles = document.createElement('style');
-    if (this.kxsClient.isKillFeedBlint) {
-      customStyles.innerHTML = `
+	private applyCustomStyles() {
+		const customStyles = document.createElement('style');
+		if (this.kxsClient.isKillFeedBlint) {
+			customStyles.innerHTML = `
         @import url('https://fonts.googleapis.com/css2?family=Oxanium:wght@600&display=swap');
   
         .killfeed-div {
@@ -305,8 +409,8 @@ class KxsClientHUD {
             display: none !important;
         }
       `;
-    } else {
-      customStyles.innerHTML = `
+		} else {
+			customStyles.innerHTML = `
         .killfeed-div {
             position: absolute;
             padding: 5px 10px;
@@ -328,466 +432,466 @@ class KxsClientHUD {
             display: none;
         }
       `;
-    }
-    document.head.appendChild(customStyles);
-  }
-
-
-  private handleResize() {
-    const viewportWidth = window.innerWidth;
-    const viewportHeight = window.innerHeight;
-
-    for (const name of ['fps', 'kills', 'ping']) {
-      const counterContainer = document.getElementById(`${name}CounterContainer`);
-      if (!counterContainer) continue;
-
-      const counter = this.kxsClient.counters[name];
-      if (!counter) continue;
-
-      const rect = counterContainer.getBoundingClientRect();
-      const savedPosition = this.getSavedPosition(name);
-
-      let newPosition = this.calculateSafePosition(
-        savedPosition,
-        rect.width,
-        rect.height,
-        viewportWidth,
-        viewportHeight
-      );
-
-      this.applyPosition(counterContainer, newPosition);
-      this.savePosition(name, newPosition);
-    }
-  }
-
-  private calculateSafePosition(
-    currentPosition: CounterPosition,
-    elementWidth: number,
-    elementHeight: number,
-    viewportWidth: number,
-    viewportHeight: number
-  ): CounterPosition {
-    let { left, top } = currentPosition;
-
-    if (left + elementWidth > viewportWidth) {
-      left = viewportWidth - elementWidth;
-    }
-    if (left < 0) {
-      left = 0;
-    }
-
-    if (top + elementHeight > viewportHeight) {
-      top = viewportHeight - elementHeight;
-    }
-    if (top < 0) {
-      top = 0;
-    }
-
-    return { left, top };
-  }
-
-  private getSavedPosition(name: string): CounterPosition {
-    const savedPosition = localStorage.getItem(`${name}CounterPosition`);
-    if (savedPosition) {
-      try {
-        return JSON.parse(savedPosition);
-      } catch {
-        return this.kxsClient.defaultPositions[name];
-      }
-    }
-    return this.kxsClient.defaultPositions[name];
-  }
-
-  private applyPosition(element: HTMLElement, position: CounterPosition) {
-    element.style.left = `${position.left}px`;
-    element.style.top = `${position.top}px`;
-  }
-
-  private savePosition(name: string, position: CounterPosition) {
-    localStorage.setItem(`${name}CounterPosition`, JSON.stringify(position));
-  }
-
-  startUpdateLoop() {
-    const now = performance.now();
-    const delta = now - this.kxsClient.lastFrameTime;
-
-    this.frameCount++;
-
-    if (delta >= 1000) {
-      this.fps = Math.round((this.frameCount * 1000) / delta);
-      this.frameCount = 0;
-      this.kxsClient.lastFrameTime = now;
-
-      this.kills = this.kxsClient.getKills();
-
-      if (this.kxsClient.isFpsVisible && this.kxsClient.counters.fps) {
-        this.kxsClient.counters.fps.textContent = `FPS: ${this.fps}`;
-      }
-
-      if (this.kxsClient.isKillsVisible && this.kxsClient.counters.kills) {
-        this.kxsClient.counters.kills.textContent = `Kills: ${this.kills}`;
-      }
-
-      if (
-        this.kxsClient.isPingVisible &&
-        this.kxsClient.counters.ping &&
-        this.pingManager
-      ) {
-        const result = this.pingManager.getPingResult();
-        this.kxsClient.counters.ping.textContent = `PING: ${result.ping} ms`;
-      }
-    }
-
-    this.pingManager.startPingTest();
-
-    if (this.kxsClient.animationFrameCallback) {
-      this.kxsClient.animationFrameCallback(() => this.startUpdateLoop());
-    }
-    this.updateUiElements();
-    this.updateBoostBars();
-    this.updateHealthBars();
-    this.kxsClient.kill_leader?.update(this.kills);
-  }
-
-  initCounter(name: string, label: string, initialText: string) {
-    const counter = document.createElement("div");
-    counter.id = `${name}Counter`;
-    const counterContainer = document.createElement("div");
-    counterContainer.id = `${name}CounterContainer`;
-
-    Object.assign(counterContainer.style, {
-      position: "absolute",
-      left: `${this.kxsClient.defaultPositions[name].left}px`,
-      top: `${this.kxsClient.defaultPositions[name].top}px`,
-      zIndex: "10000",
-    });
-
-    Object.assign(counter.style, {
-      color: "white",
-      backgroundColor: "rgba(0, 0, 0, 0.2)",
-      borderRadius: "5px",
-      fontFamily: "Arial, sans-serif",
-      padding: "5px 10px",
-      pointerEvents: "auto",
-      cursor: "move",
-      width: `${this.kxsClient.defaultSizes[name].width}px`,
-      height: `${this.kxsClient.defaultSizes[name].height}px`,
-      display: "flex",
-      alignItems: "center",
-      justifyContent: "center",
-      textAlign: "center",
-      resize: "both",
-      overflow: "hidden",
-    });
-
-    counter.textContent = `${label}: ${initialText}`;
-    counterContainer.appendChild(counter);
-
-    const uiTopLeft = document.getElementById("ui-top-left");
-    if (uiTopLeft) {
-      uiTopLeft.appendChild(counterContainer);
-    }
-
-    const adjustFontSize = () => {
-      const { width, height } = counter.getBoundingClientRect();
-      const size = Math.min(width, height) * 0.4;
-      counter.style.fontSize = `${size}px`;
-    };
-
-    new ResizeObserver(adjustFontSize).observe(counter);
-
-    counter.addEventListener("mousedown", (event) => {
-      if (event.button === 1) {
-        this.resetCounter(name, label, initialText);
-        event.preventDefault();
-      }
-    });
-
-    this.kxsClient.makeDraggable(counterContainer, `${name}CounterPosition`);
-    this.kxsClient.counters[name] = counter;
-  }
-
-  resetCounter(name: string, label: string, initialText: string) {
-    const counter = this.kxsClient.counters[name];
-    const container = document.getElementById(`${name}CounterContainer`);
-
-    if (!counter || !container) return;
-
-    // Reset only this counter's position and size
-    Object.assign(container.style, {
-      left: `${this.kxsClient.defaultPositions[name].left}px`,
-      top: `${this.kxsClient.defaultPositions[name].top}px`,
-    });
-
-    Object.assign(counter.style, {
-      width: `${this.kxsClient.defaultSizes[name].width}px`,
-      height: `${this.kxsClient.defaultSizes[name].height}px`,
-      fontSize: "18px",
-    });
-
-    counter.textContent = `${label}: ${initialText}`;
-
-    // Clear the saved position for this counter only
-    localStorage.removeItem(`${name}CounterPosition`);
-  }
-
-  updateBoostBars() {
-    const boostCounter = document.querySelector("#ui-boost-counter");
-    if (boostCounter) {
-      const boostBars = boostCounter.querySelectorAll(
-        ".ui-boost-base .ui-bar-inner",
-      );
-
-      let totalBoost = 0;
-      const weights = [25, 25, 40, 10];
-
-      boostBars.forEach((bar, index) => {
-        const width = parseFloat((bar as HTMLElement).style.width);
-        if (!isNaN(width)) {
-          totalBoost += width * (weights[index] / 100);
-        }
-      });
-
-      const averageBoost = Math.round(totalBoost);
-      let boostDisplay = boostCounter.querySelector(".boost-display");
-
-      if (!boostDisplay) {
-        boostDisplay = document.createElement("div");
-        boostDisplay.classList.add("boost-display");
-        Object.assign((boostDisplay as HTMLElement).style, {
-          position: "absolute",
-          bottom: "75px",
-          right: "335px",
-          color: "#FF901A",
-          backgroundColor: "rgba(0, 0, 0, 0.4)",
-          padding: "5px 10px",
-          borderRadius: "5px",
-          fontFamily: "Arial, sans-serif",
-          fontSize: "14px",
-          zIndex: "10",
-          textAlign: "center",
-        });
-
-        boostCounter.appendChild(boostDisplay);
-      }
-
-      boostDisplay.textContent = `AD: ${averageBoost}%`;
-    }
-  }
-
-  setupWeaponBorderHandler() {
-    const weaponContainers = Array.from(
-      document.getElementsByClassName("ui-weapon-switch"),
-    );
-    weaponContainers.forEach((container) => {
-      if (container.id === "ui-weapon-id-4") {
-        (container as HTMLElement).style.border = "3px solid #2f4032";
-      } else {
-        (container as HTMLElement).style.border = "3px solid #FFFFFF";
-      }
-    });
-
-    const weaponNames = Array.from(
-      document.getElementsByClassName("ui-weapon-name"),
-    );
-
-    type ColorKey = 'ORANGE' | 'BLUE' | 'GREEN' | 'RED' | 'BLACK' | 'OLIVE' | 'ORANGE_RED' | 'PURPLE' | 'TEAL' | 'BROWN' | 'PINK' | 'DEFAULT';
-
-    const WEAPON_COLORS: Record<ColorKey, string> = {
-      ORANGE: '#FFAE00',
-      BLUE: '#007FFF',
-      GREEN: '#0f690d',
-      RED: '#FF0000',
-      BLACK: '#000000',
-      OLIVE: '#808000',
-      ORANGE_RED: '#FF4500',
-      PURPLE: '#800080',
-      TEAL: '#008080',
-      BROWN: '#A52A2A',
-      PINK: '#FFC0CB',
-      DEFAULT: '#FFFFFF'
-    };
-    
-    const WEAPON_COLOR_MAPPING: Record<ColorKey, string[]> = {
-      ORANGE: ['CZ-3A1', 'G18C', 'M9', 'M93R', 'MAC-10', 'MP5', 'P30L', 'DUAL P30L', 'UMP9', 'VECTOR', 'VSS', 'FLAMETHROWER'],
-      BLUE: ['AK-47', 'OT-38', 'OTS-38', 'M39 EMR', 'DP-28', 'MOSIN-NAGANT', 'SCAR-H', 'SV-98', 'M1 GARAND', 'PKP PECHENEG', 'AN-94', 'BAR M1918', 'BLR 81', 'SVD-63', 'M134', 'WATER GUN', 'GROZA', 'GROZA-S'],
-      GREEN: ['FAMAS', 'M416', 'M249', 'QBB-97', 'MK 12 SPR', 'M4A1-S', 'SCOUT ELITE', 'L86A2'],
-      RED: ['M870', 'MP220', 'SAIGA-12', 'SPAS-12', 'USAS-12', 'SUPER 90', 'LASR GUN', 'M1100'],
-      BLACK: ['DEAGLE 50', 'RAINBOW BLASTER'],
-      OLIVE: ['AWM-S', 'MK 20 SSR'],
-      ORANGE_RED: ['FLARE GUN'],
-      PURPLE: ['MODEL 94', 'PEACEMAKER', 'VECTOR (.45 ACP)', 'M1911', 'M1A1', 'MK45G'],
-      TEAL: ['M79'],
-      BROWN: ['POTATO CANNON', 'SPUD GUN'],
-      PINK: ['HEART CANNON'],
-      DEFAULT: []
-    };
-    
-    weaponNames.forEach((weaponNameElement) => {
-      const weaponContainer = weaponNameElement.closest(".ui-weapon-switch");
-      
-      const observer = new MutationObserver(() => {
-        const weaponName = weaponNameElement.textContent?.trim()?.toUpperCase() || '';
-        
-        const colorKey = (Object.entries(WEAPON_COLOR_MAPPING)
-          .find(([_, weapons]) => weapons.includes(weaponName))?.[0] || 'DEFAULT') as ColorKey;
-        
-        if (weaponContainer && weaponContainer.id !== "ui-weapon-id-4") {
-          (weaponContainer as HTMLElement).style.border = `3px solid ${WEAPON_COLORS[colorKey]}`;
-        }
-      });
-      
-      observer.observe(weaponNameElement, { childList: true, characterData: true, subtree: true });
-    });
-  }
-
-  updateUiElements() {
-    const currentUrl = window.location.href;
-
-    const isSpecialUrl = /\/#\w+/.test(currentUrl);
-
-    const playerOptions = document.getElementById("player-options");
-    const teamMenuContents = document.getElementById("team-menu-contents");
-    const startMenuContainer = document.querySelector(
-      "#start-menu .play-button-container",
-    );
-
-    if (!playerOptions) return;
-
-    if (
-      isSpecialUrl &&
-      teamMenuContents &&
-      playerOptions.parentNode !== teamMenuContents
-    ) {
-      teamMenuContents.appendChild(playerOptions);
-    } else if (
-      !isSpecialUrl &&
-      startMenuContainer &&
-      playerOptions.parentNode !== startMenuContainer
-    ) {
-      const firstChild = startMenuContainer.firstChild;
-      startMenuContainer.insertBefore(playerOptions, firstChild);
-    }
-    const teamMenu = document.getElementById("team-menu");
-    if (teamMenu) {
-      teamMenu.style.height = "355px";
-    }
-    const menuBlocks = document.querySelectorAll(".menu-block");
-    menuBlocks.forEach((block) => {
-      (block as HTMLElement).style.maxHeight = "355px";
-    });
-    //scalable?
-  }
-
-  updateMenuButtonText() {
-    const hideButton = document.getElementById("hideMenuButton")!;
-    hideButton.textContent = this.isMenuVisible
-      ? "Hide Menu [P]"
-      : "Show Menu [P]";
-  }
-
-  updateHealthBars() {
-    const healthBars = document.querySelectorAll("#ui-health-container");
-    healthBars.forEach((container) => {
-      const bar = container.querySelector("#ui-health-actual");
-      if (bar) {
-        const currentHealth = Math.round(parseFloat((bar as HTMLElement).style.width));
-        let percentageText = container.querySelector(".health-text");
-
-        // Create or update percentage text
-        if (!percentageText) {
-          percentageText = document.createElement("span");
-          percentageText.classList.add("health-text");
-          Object.assign((percentageText as HTMLElement).style, {
-            width: "100%",
-            textAlign: "center",
-            marginTop: "5px",
-            color: "#333",
-            fontSize: "20px",
-            fontWeight: "bold",
-            position: "absolute",
-            zIndex: "10",
-          });
-          container.appendChild(percentageText);
-        }
-
-        // Check for health change
-        if (currentHealth !== this.lastHealthValue) {
-          const healthChange = currentHealth - this.lastHealthValue;
-          if (healthChange !== 0) {
-            this.showHealthChangeAnimation(container as HTMLElement, healthChange);
-          }
-          this.lastHealthValue = currentHealth;
-        }
-
-        if (this.kxsClient.isHealthWarningEnabled) {
-          this.kxsClient.healWarning?.update(currentHealth);
-        } else {
-          this.kxsClient.healWarning?.hide();
-        }
-        percentageText.textContent = `${currentHealth}%`;
-
-        // Update animations
-        this.updateHealthAnimations();
-      }
-    });
-  }
-
-  private showHealthChangeAnimation(container: HTMLElement, change: number) {
-    const animation = document.createElement("div");
-    const isPositive = change > 0;
-
-    Object.assign(animation.style, {
-      position: "absolute",
-      color: isPositive ? "#2ecc71" : "#e74c3c",
-      fontSize: "24px",
-      fontWeight: "bold",
-      fontFamily: "Arial, sans-serif",
-      textShadow: "2px 2px 4px rgba(0,0,0,0.3)",
-      pointerEvents: "none",
-      zIndex: "100",
-      opacity: "1",
-      top: "50%",
-      right: "-80px", // Position à droite de la barre de vie
-      transform: "translateY(-50%)", // Centre verticalement
-      whiteSpace: "nowrap", // Empêche le retour à la ligne
-    });
-
-    animation.textContent = `${isPositive ? "+" : ""}${change} HP`;
-
-    container.appendChild(animation);
-
-    this.healthAnimations.push({
-      element: animation,
-      startTime: performance.now(),
-      duration: 1500, // Animation duration in milliseconds
-      value: change,
-    });
-  }
-
-  private updateHealthAnimations() {
-    const currentTime = performance.now();
-
-    this.healthAnimations = this.healthAnimations.filter(animation => {
-      const elapsed = currentTime - animation.startTime;
-      const progress = Math.min(elapsed / animation.duration, 1);
-
-      if (progress < 1) {
-        // Update animation position and opacity
-        // Maintenant l'animation se déplace horizontalement vers la droite
-        const translateX = progress * 20; // Déplacement horizontal
-        Object.assign(animation.element.style, {
-          transform: `translateY(-50%) translateX(${translateX}px)`,
-          opacity: String(1 - progress),
-        });
-        return true;
-      } else {
-        // Remove completed animation
-        animation.element.remove();
-        return false;
-      }
-    });
-  }
+		}
+		document.head.appendChild(customStyles);
+	}
+
+
+	private handleResize() {
+		const viewportWidth = window.innerWidth;
+		const viewportHeight = window.innerHeight;
+
+		for (const name of ['fps', 'kills', 'ping']) {
+			const counterContainer = document.getElementById(`${name}CounterContainer`);
+			if (!counterContainer) continue;
+
+			const counter = this.kxsClient.counters[name];
+			if (!counter) continue;
+
+			const rect = counterContainer.getBoundingClientRect();
+			const savedPosition = this.getSavedPosition(name);
+
+			let newPosition = this.calculateSafePosition(
+				savedPosition,
+				rect.width,
+				rect.height,
+				viewportWidth,
+				viewportHeight
+			);
+
+			this.applyPosition(counterContainer, newPosition);
+			this.savePosition(name, newPosition);
+		}
+	}
+
+	private calculateSafePosition(
+		currentPosition: CounterPosition,
+		elementWidth: number,
+		elementHeight: number,
+		viewportWidth: number,
+		viewportHeight: number
+	): CounterPosition {
+		let { left, top } = currentPosition;
+
+		if (left + elementWidth > viewportWidth) {
+			left = viewportWidth - elementWidth;
+		}
+		if (left < 0) {
+			left = 0;
+		}
+
+		if (top + elementHeight > viewportHeight) {
+			top = viewportHeight - elementHeight;
+		}
+		if (top < 0) {
+			top = 0;
+		}
+
+		return { left, top };
+	}
+
+	private getSavedPosition(name: string): CounterPosition {
+		const savedPosition = localStorage.getItem(`${name}CounterPosition`);
+		if (savedPosition) {
+			try {
+				return JSON.parse(savedPosition);
+			} catch {
+				return this.kxsClient.defaultPositions[name];
+			}
+		}
+		return this.kxsClient.defaultPositions[name];
+	}
+
+	private applyPosition(element: HTMLElement, position: CounterPosition) {
+		element.style.left = `${position.left}px`;
+		element.style.top = `${position.top}px`;
+	}
+
+	private savePosition(name: string, position: CounterPosition) {
+		localStorage.setItem(`${name}CounterPosition`, JSON.stringify(position));
+	}
+
+	startUpdateLoop() {
+		const now = performance.now();
+		const delta = now - this.kxsClient.lastFrameTime;
+
+		this.frameCount++;
+
+		if (delta >= 1000) {
+			this.fps = Math.round((this.frameCount * 1000) / delta);
+			this.frameCount = 0;
+			this.kxsClient.lastFrameTime = now;
+
+			this.kills = this.kxsClient.getKills();
+
+			if (this.kxsClient.isFpsVisible && this.kxsClient.counters.fps) {
+				this.kxsClient.counters.fps.textContent = `FPS: ${this.fps}`;
+			}
+
+			if (this.kxsClient.isKillsVisible && this.kxsClient.counters.kills) {
+				this.kxsClient.counters.kills.textContent = `Kills: ${this.kills}`;
+			}
+
+			if (
+				this.kxsClient.isPingVisible &&
+				this.kxsClient.counters.ping &&
+				this.pingManager
+			) {
+				const result = this.pingManager.getPingResult();
+				this.kxsClient.counters.ping.textContent = `PING: ${result.ping} ms`;
+			}
+		}
+
+		this.pingManager.startPingTest();
+
+		if (this.kxsClient.animationFrameCallback) {
+			this.kxsClient.animationFrameCallback(() => this.startUpdateLoop());
+		}
+		this.updateUiElements();
+		this.updateBoostBars();
+		this.updateHealthBars();
+		this.kxsClient.kill_leader?.update(this.kills);
+	}
+
+	initCounter(name: string, label: string, initialText: string) {
+		const counter = document.createElement("div");
+		counter.id = `${name}Counter`;
+		const counterContainer = document.createElement("div");
+		counterContainer.id = `${name}CounterContainer`;
+
+		Object.assign(counterContainer.style, {
+			position: "absolute",
+			left: `${this.kxsClient.defaultPositions[name].left}px`,
+			top: `${this.kxsClient.defaultPositions[name].top}px`,
+			zIndex: "10000",
+		});
+
+		Object.assign(counter.style, {
+			color: "white",
+			backgroundColor: "rgba(0, 0, 0, 0.2)",
+			borderRadius: "5px",
+			fontFamily: "Arial, sans-serif",
+			padding: "5px 10px",
+			pointerEvents: "auto",
+			cursor: "move",
+			width: `${this.kxsClient.defaultSizes[name].width}px`,
+			height: `${this.kxsClient.defaultSizes[name].height}px`,
+			display: "flex",
+			alignItems: "center",
+			justifyContent: "center",
+			textAlign: "center",
+			resize: "both",
+			overflow: "hidden",
+		});
+
+		counter.textContent = `${label}: ${initialText}`;
+		counterContainer.appendChild(counter);
+
+		const uiTopLeft = document.getElementById("ui-top-left");
+		if (uiTopLeft) {
+			uiTopLeft.appendChild(counterContainer);
+		}
+
+		const adjustFontSize = () => {
+			const { width, height } = counter.getBoundingClientRect();
+			const size = Math.min(width, height) * 0.4;
+			counter.style.fontSize = `${size}px`;
+		};
+
+		new ResizeObserver(adjustFontSize).observe(counter);
+
+		counter.addEventListener("mousedown", (event) => {
+			if (event.button === 1) {
+				this.resetCounter(name, label, initialText);
+				event.preventDefault();
+			}
+		});
+
+		this.kxsClient.makeDraggable(counterContainer, `${name}CounterPosition`);
+		this.kxsClient.counters[name] = counter;
+	}
+
+	resetCounter(name: string, label: string, initialText: string) {
+		const counter = this.kxsClient.counters[name];
+		const container = document.getElementById(`${name}CounterContainer`);
+
+		if (!counter || !container) return;
+
+		// Reset only this counter's position and size
+		Object.assign(container.style, {
+			left: `${this.kxsClient.defaultPositions[name].left}px`,
+			top: `${this.kxsClient.defaultPositions[name].top}px`,
+		});
+
+		Object.assign(counter.style, {
+			width: `${this.kxsClient.defaultSizes[name].width}px`,
+			height: `${this.kxsClient.defaultSizes[name].height}px`,
+			fontSize: "18px",
+		});
+
+		counter.textContent = `${label}: ${initialText}`;
+
+		// Clear the saved position for this counter only
+		localStorage.removeItem(`${name}CounterPosition`);
+	}
+
+	updateBoostBars() {
+		const boostCounter = document.querySelector("#ui-boost-counter");
+		if (boostCounter) {
+			const boostBars = boostCounter.querySelectorAll(
+				".ui-boost-base .ui-bar-inner",
+			);
+
+			let totalBoost = 0;
+			const weights = [25, 25, 40, 10];
+
+			boostBars.forEach((bar, index) => {
+				const width = parseFloat((bar as HTMLElement).style.width);
+				if (!isNaN(width)) {
+					totalBoost += width * (weights[index] / 100);
+				}
+			});
+
+			const averageBoost = Math.round(totalBoost);
+			let boostDisplay = boostCounter.querySelector(".boost-display");
+
+			if (!boostDisplay) {
+				boostDisplay = document.createElement("div");
+				boostDisplay.classList.add("boost-display");
+				Object.assign((boostDisplay as HTMLElement).style, {
+					position: "absolute",
+					bottom: "75px",
+					right: "335px",
+					color: "#FF901A",
+					backgroundColor: "rgba(0, 0, 0, 0.4)",
+					padding: "5px 10px",
+					borderRadius: "5px",
+					fontFamily: "Arial, sans-serif",
+					fontSize: "14px",
+					zIndex: "10",
+					textAlign: "center",
+				});
+
+				boostCounter.appendChild(boostDisplay);
+			}
+
+			boostDisplay.textContent = `AD: ${averageBoost}%`;
+		}
+	}
+
+	setupWeaponBorderHandler() {
+		const weaponContainers = Array.from(
+			document.getElementsByClassName("ui-weapon-switch"),
+		);
+		weaponContainers.forEach((container) => {
+			if (container.id === "ui-weapon-id-4") {
+				(container as HTMLElement).style.border = "3px solid #2f4032";
+			} else {
+				(container as HTMLElement).style.border = "3px solid #FFFFFF";
+			}
+		});
+
+		const weaponNames = Array.from(
+			document.getElementsByClassName("ui-weapon-name"),
+		);
+
+		type ColorKey = 'ORANGE' | 'BLUE' | 'GREEN' | 'RED' | 'BLACK' | 'OLIVE' | 'ORANGE_RED' | 'PURPLE' | 'TEAL' | 'BROWN' | 'PINK' | 'DEFAULT';
+
+		const WEAPON_COLORS: Record<ColorKey, string> = {
+			ORANGE: '#FFAE00',
+			BLUE: '#007FFF',
+			GREEN: '#0f690d',
+			RED: '#FF0000',
+			BLACK: '#000000',
+			OLIVE: '#808000',
+			ORANGE_RED: '#FF4500',
+			PURPLE: '#800080',
+			TEAL: '#008080',
+			BROWN: '#A52A2A',
+			PINK: '#FFC0CB',
+			DEFAULT: '#FFFFFF'
+		};
+
+		const WEAPON_COLOR_MAPPING: Record<ColorKey, string[]> = {
+			ORANGE: ['CZ-3A1', 'G18C', 'M9', 'M93R', 'MAC-10', 'MP5', 'P30L', 'DUAL P30L', 'UMP9', 'VECTOR', 'VSS', 'FLAMETHROWER'],
+			BLUE: ['AK-47', 'OT-38', 'OTS-38', 'M39 EMR', 'DP-28', 'MOSIN-NAGANT', 'SCAR-H', 'SV-98', 'M1 GARAND', 'PKP PECHENEG', 'AN-94', 'BAR M1918', 'BLR 81', 'SVD-63', 'M134', 'WATER GUN', 'GROZA', 'GROZA-S'],
+			GREEN: ['FAMAS', 'M416', 'M249', 'QBB-97', 'MK 12 SPR', 'M4A1-S', 'SCOUT ELITE', 'L86A2'],
+			RED: ['M870', 'MP220', 'SAIGA-12', 'SPAS-12', 'USAS-12', 'SUPER 90', 'LASR GUN', 'M1100'],
+			BLACK: ['DEAGLE 50', 'RAINBOW BLASTER'],
+			OLIVE: ['AWM-S', 'MK 20 SSR'],
+			ORANGE_RED: ['FLARE GUN'],
+			PURPLE: ['MODEL 94', 'PEACEMAKER', 'VECTOR (.45 ACP)', 'M1911', 'M1A1', 'MK45G'],
+			TEAL: ['M79'],
+			BROWN: ['POTATO CANNON', 'SPUD GUN'],
+			PINK: ['HEART CANNON'],
+			DEFAULT: []
+		};
+
+		weaponNames.forEach((weaponNameElement) => {
+			const weaponContainer = weaponNameElement.closest(".ui-weapon-switch");
+
+			const observer = new MutationObserver(() => {
+				const weaponName = weaponNameElement.textContent?.trim()?.toUpperCase() || '';
+
+				const colorKey = (Object.entries(WEAPON_COLOR_MAPPING)
+					.find(([_, weapons]) => weapons.includes(weaponName))?.[0] || 'DEFAULT') as ColorKey;
+
+				if (weaponContainer && weaponContainer.id !== "ui-weapon-id-4") {
+					(weaponContainer as HTMLElement).style.border = `3px solid ${WEAPON_COLORS[colorKey]}`;
+				}
+			});
+
+			observer.observe(weaponNameElement, { childList: true, characterData: true, subtree: true });
+		});
+	}
+
+	updateUiElements() {
+		const currentUrl = window.location.href;
+
+		const isSpecialUrl = /\/#\w+/.test(currentUrl);
+
+		const playerOptions = document.getElementById("player-options");
+		const teamMenuContents = document.getElementById("team-menu-contents");
+		const startMenuContainer = document.querySelector(
+			"#start-menu .play-button-container",
+		);
+
+		if (!playerOptions) return;
+
+		if (
+			isSpecialUrl &&
+			teamMenuContents &&
+			playerOptions.parentNode !== teamMenuContents
+		) {
+			teamMenuContents.appendChild(playerOptions);
+		} else if (
+			!isSpecialUrl &&
+			startMenuContainer &&
+			playerOptions.parentNode !== startMenuContainer
+		) {
+			const firstChild = startMenuContainer.firstChild;
+			startMenuContainer.insertBefore(playerOptions, firstChild);
+		}
+		const teamMenu = document.getElementById("team-menu");
+		if (teamMenu) {
+			teamMenu.style.height = "355px";
+		}
+		const menuBlocks = document.querySelectorAll(".menu-block");
+		menuBlocks.forEach((block) => {
+			(block as HTMLElement).style.maxHeight = "355px";
+		});
+		//scalable?
+	}
+
+	updateMenuButtonText() {
+		const hideButton = document.getElementById("hideMenuButton")!;
+		hideButton.textContent = this.isMenuVisible
+			? "Hide Menu [P]"
+			: "Show Menu [P]";
+	}
+
+	updateHealthBars() {
+		const healthBars = document.querySelectorAll("#ui-health-container");
+		healthBars.forEach((container) => {
+			const bar = container.querySelector("#ui-health-actual");
+			if (bar) {
+				const currentHealth = Math.round(parseFloat((bar as HTMLElement).style.width));
+				let percentageText = container.querySelector(".health-text");
+
+				// Create or update percentage text
+				if (!percentageText) {
+					percentageText = document.createElement("span");
+					percentageText.classList.add("health-text");
+					Object.assign((percentageText as HTMLElement).style, {
+						width: "100%",
+						textAlign: "center",
+						marginTop: "5px",
+						color: "#333",
+						fontSize: "20px",
+						fontWeight: "bold",
+						position: "absolute",
+						zIndex: "10",
+					});
+					container.appendChild(percentageText);
+				}
+
+				// Check for health change
+				if (currentHealth !== this.lastHealthValue) {
+					const healthChange = currentHealth - this.lastHealthValue;
+					if (healthChange !== 0) {
+						this.showHealthChangeAnimation(container as HTMLElement, healthChange);
+					}
+					this.lastHealthValue = currentHealth;
+				}
+
+				if (this.kxsClient.isHealthWarningEnabled) {
+					this.kxsClient.healWarning?.update(currentHealth);
+				} else {
+					this.kxsClient.healWarning?.hide();
+				}
+				percentageText.textContent = `${currentHealth}%`;
+
+				// Update animations
+				this.updateHealthAnimations();
+			}
+		});
+	}
+
+	private showHealthChangeAnimation(container: HTMLElement, change: number) {
+		const animation = document.createElement("div");
+		const isPositive = change > 0;
+
+		Object.assign(animation.style, {
+			position: "absolute",
+			color: isPositive ? "#2ecc71" : "#e74c3c",
+			fontSize: "24px",
+			fontWeight: "bold",
+			fontFamily: "Arial, sans-serif",
+			textShadow: "2px 2px 4px rgba(0,0,0,0.3)",
+			pointerEvents: "none",
+			zIndex: "100",
+			opacity: "1",
+			top: "50%",
+			right: "-80px", // Position à droite de la barre de vie
+			transform: "translateY(-50%)", // Centre verticalement
+			whiteSpace: "nowrap", // Empêche le retour à la ligne
+		});
+
+		animation.textContent = `${isPositive ? "+" : ""}${change} HP`;
+
+		container.appendChild(animation);
+
+		this.healthAnimations.push({
+			element: animation,
+			startTime: performance.now(),
+			duration: 1500, // Animation duration in milliseconds
+			value: change,
+		});
+	}
+
+	private updateHealthAnimations() {
+		const currentTime = performance.now();
+
+		this.healthAnimations = this.healthAnimations.filter(animation => {
+			const elapsed = currentTime - animation.startTime;
+			const progress = Math.min(elapsed / animation.duration, 1);
+
+			if (progress < 1) {
+				// Update animation position and opacity
+				// Maintenant l'animation se déplace horizontalement vers la droite
+				const translateX = progress * 20; // Déplacement horizontal
+				Object.assign(animation.element.style, {
+					transform: `translateY(-50%) translateX(${translateX}px)`,
+					opacity: String(1 - progress),
+				});
+				return true;
+			} else {
+				// Remove completed animation
+				animation.element.remove();
+				return false;
+			}
+		});
+	}
 }
 
 export { KxsClientHUD };
