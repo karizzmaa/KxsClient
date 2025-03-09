@@ -7,8 +7,7 @@
 	"placeholder": "Kxs Client - Survev.io Client",
 	"scripts": {
 		"test": "echo \"Error: no test specified\" && exit 1",
-		"commits": "oco --yes; npm version patch; git push;",
-		"publish": "bun run ./KxsClient-Website-Updater.ts"
+		"commits": "oco --yes; npm version patch; git push;"
 	},
 	"keywords": [],
 	"author": "Kisakay x SoyAlguien",

@@ -1,2 +1,2 @@
 bun run commits
-bun run publish
+bash ./KxsClient-Website-Updater.sh
