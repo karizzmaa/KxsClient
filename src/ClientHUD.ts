@@ -58,7 +58,6 @@ class KxsClientHUD {
 	private initFriendDetector() {
 		// Initialize friends list
 		let all_friends = this.kxsClient.all_friends.split(',') || [];
-		console.log(all_friends, "Friends list initialized");
 
 		if (all_friends.length >= 1) {
 			// Create a cache for detected friends
@@ -122,6 +121,8 @@ class KxsClientHUD {
 
 				// Function to check all kill feeds
 				const checkAllKillfeeds = () => {
+					all_friends = this.kxsClient.all_friends.split(',') || [];
+
 					for (let i = 0; i <= 5; i++) {
 						const divId = `ui-killfeed-${i}`;
 						const killDiv = document.getElementById(divId);
