@@ -11,7 +11,7 @@ class KxsMainClientMenu {
 		this.kxsClient = kxsClient;
 		this.menu = document.createElement("div");
 		this.setupKeyListeners();
-		this.initMenu();
+		// this.initMenu();
 	}
 
 	initMenu() {

@@ -6,12 +6,17 @@ import { intercept } from "./intercept";
 import KxsClient from "./KxsClient";
 import { Config } from "./types/configtype";
 import { KxsLegacyClientSecondaryMenu } from "./ClientSecondaryMenu";
+import { LoadingScreen } from "./LoadingScreen";
 
 const packageInfo = require('../package.json');
 const config: Config = require('../config.json');
 
 export const background_song = config.base_url + "/assets/Stranger_Things_Theme_Song_C418_REMIX.mp3";
 export const kxs_logo = config.base_url + "/assets/KysClientLogo.png";
+
+const loadingScreen = new LoadingScreen(kxs_logo);
+loadingScreen.show();
+
 const backgroundElement = document.getElementById("background");
 if (backgroundElement) backgroundElement.style.backgroundImage = `url("${config.base_url}/assets/background.jpg")`;
 
@@ -48,6 +53,11 @@ if (startBottomMiddle) {
 	}
 }
 
+
 const kxsClient = new KxsClient();
 const kxsClientHUD = new KxsClientHUD(kxsClient);
 const mainMenu = new KxsMainClientMenu(kxsClient);
+
+setInterval(() => {
+	loadingScreen.hide();
+}, 1400);
