@@ -10,8 +10,8 @@ import { KxsLegacyClientSecondaryMenu } from "./ClientSecondaryMenu";
 const packageInfo = require('../package.json');
 const config: Config = require('../config.json');
 
-const background_song = config.base_url + "/assets/Stranger_Things_Theme_Song_C418_REMIX.mp3";
-const kxs_logo = config.base_url + "/assets/KysClientLogo.png";
+export const background_song = config.base_url + "/assets/Stranger_Things_Theme_Song_C418_REMIX.mp3";
+export const kxs_logo = config.base_url + "/assets/KysClientLogo.png";
 const backgroundElement = document.getElementById("background");
 if (backgroundElement) backgroundElement.style.backgroundImage = `url("${config.base_url}/assets/background.jpg")`;
 
@@ -27,7 +27,7 @@ intercept('img/survev_logo_full.png', kxs_logo);
 
 const uiStatsLogo = document.querySelector('#ui-stats-logo') as HTMLElement | null;
 if (uiStatsLogo) {
-	uiStatsLogo.style.backgroundImage = "url('https://kxs.rip/assets/KysClientLogo.png')";
+	uiStatsLogo.style.backgroundImage = `url('${kxs_logo}')`;
 }
 const newChangelogUrl = config.base_url;
 const startBottomMiddle = document.getElementById("start-bottom-middle");

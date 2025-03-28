@@ -1,3 +1,4 @@
+import { kxs_logo } from ".";
 import { KxsLegacyClientSecondaryMenu } from "./ClientSecondaryMenu";
 import KxsClient from "./KxsClient";
 
@@ -22,7 +23,9 @@ class KxsClientSecondaryMenu {
 	private isDragging: boolean;
 	private dragOffset: { x: number; y: number };
 	private sections: MenuSection[];
+	private allOptions: MenuOption[];
 	private activeCategory: string;
+	private searchTerm: string = '';
 	menu: HTMLDivElement;
 	kxsClient: KxsClient;
 
@@ -32,6 +35,7 @@ class KxsClientSecondaryMenu {
 		this.isDragging = false;
 		this.dragOffset = { x: 0, y: 0 };
 		this.sections = [];
+		this.allOptions = [];
 		this.activeCategory = "ALL";
 		this.menu = document.createElement("div");
 		this.initMenu();
@@ -59,11 +63,13 @@ class KxsClientSecondaryMenu {
 			color: "#fff",
 			maxHeight: "80vh",
 			overflowY: "auto",
+			overflowX: "hidden", // Prevent horizontal scrolling
 			position: "fixed",
 			top: "10%",
 			left: "50%",
 			transform: "translateX(-50%)",
 			display: "none",
+			boxSizing: "border-box", // Include padding in width calculation
 		});
 	}
 
@@ -72,9 +78,9 @@ class KxsClientSecondaryMenu {
 		const header = document.createElement("div");
 		header.style.marginBottom = "20px";
 		header.innerHTML = `
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; width: 100%; box-sizing: border-box;">
             <div style="display: flex; align-items: center; gap: 10px;">
-                <img src="https://kxs.rip/assets/KysClientLogo.png" 
+                <img src="${kxs_logo}" 
                     alt="Logo" style="width: 24px; height: 24px;">
                 <span style="font-size: 20px; font-weight: bold;">KXS CLIENT</span>
             </div>
@@ -89,19 +95,48 @@ class KxsClientSecondaryMenu {
               ">×</button>
             </div>
           </div>
-          <div style="display: flex; gap: 10px; margin-bottom: 15px;">
-            ${["ALL", "HUD", "SERVER", "MECHANIC"].map(cat => `
-              <button class="category-btn" data-category="${cat}" style="
-                padding: 6px 16px;
-                background: ${this.activeCategory === cat ? '#3B82F6' : 'rgba(55, 65, 81, 0.8)'};
-                border: none;
-                border-radius: 6px;
-                color: white;
-                cursor: pointer;
-                font-size: 14px;
-                transition: background 0.2s;
-              ">${cat}</button>
-            `).join('')}
+          <div style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 15px; width: 100%; box-sizing: border-box;">
+            <div style="display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 5px;">
+              ${["ALL", "HUD", "SERVER", "MECHANIC"].map(cat => `
+                <button class="category-btn" data-category="${cat}" style="
+                  padding: 6px 16px;
+                  background: ${this.activeCategory === cat ? '#3B82F6' : 'rgba(55, 65, 81, 0.8)'};
+                  border: none;
+                  border-radius: 6px;
+                  color: white;
+                  cursor: pointer;
+                  font-size: 14px;
+                  transition: background 0.2s;
+                ">${cat}</button>
+              `).join('')}
+            </div>
+            <div style="display: flex; width: 100%; box-sizing: border-box;">
+              <div style="position: relative; width: 100%; box-sizing: border-box;">
+                <input type="text" id="kxsSearchInput" placeholder="Search options..." style="
+                  width: 100%;
+                  padding: 8px 12px 8px 32px;
+                  background: rgba(55, 65, 81, 0.8);
+                  border: none;
+                  border-radius: 6px;
+                  color: white;
+                  font-size: 14px;
+                  outline: none;
+                  box-sizing: border-box;
+                ">
+                <div style="
+                  position: absolute;
+                  left: 10px;
+                  top: 50%;
+                  transform: translateY(-50%);
+                  width: 14px;
+                  height: 14px;
+                ">
+                  <svg fill="#ffffff" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/>
+                  </svg>
+                </div>
+              </div>
+            </div>
           </div>
         `;
 
@@ -119,6 +154,12 @@ class KxsClientSecondaryMenu {
 			this.toggleMenuVisibility();
 		});
 
+		const searchInput = header.querySelector('#kxsSearchInput') as HTMLInputElement;
+		searchInput?.addEventListener('input', (e) => {
+			this.searchTerm = (e.target as HTMLInputElement).value.toLowerCase();
+			this.filterOptions();
+		});
+
 		this.menu.appendChild(header);
 	}
 
@@ -128,9 +169,18 @@ class KxsClientSecondaryMenu {
 		if (gridContainer) {
 			gridContainer.innerHTML = '';
 		}
+		// Reset search term when clearing menu
+		this.searchTerm = '';
+		const searchInput = document.getElementById('kxsSearchInput') as HTMLInputElement;
+		if (searchInput) {
+			searchInput.value = '';
+		}
 	}
 
 	private loadOption(): void {
+		// Clear existing options to avoid duplicates
+		this.allOptions = [];
+
 		let HUD = this.addSection("HUD", 'HUD');
 		let MECHANIC = this.addSection("MECHANIC", 'MECHANIC');
 		let SERVER = this.addSection("SERVER", 'SERVER');
@@ -370,26 +420,7 @@ class KxsClientSecondaryMenu {
 
 	private setActiveCategory(category: string): void {
 		this.activeCategory = category;
-		const gridContainer = document.getElementById('kxsMenuGrid');
-		if (gridContainer) {
-			// Clear existing content
-			gridContainer.innerHTML = '';
-
-			// Get unique options based on category
-			const displayedOptions = new Set();
-			this.sections.forEach(section => {
-				if (category === 'ALL' || section.category === category) {
-					section.options.forEach(option => {
-						// Create a unique key for each option
-						const optionKey = `${option.label}-${option.category}`;
-						if (!displayedOptions.has(optionKey)) {
-							displayedOptions.add(optionKey);
-							this.createOptionCard(option, gridContainer);
-						}
-					});
-				}
-			});
-		}
+		this.filterOptions();
 
 		// Update button styles
 		this.menu.querySelectorAll('.category-btn').forEach(btn => {
@@ -399,6 +430,46 @@ class KxsClientSecondaryMenu {
 		});
 	}
 
+	private filterOptions(): void {
+		const gridContainer = document.getElementById('kxsMenuGrid');
+		if (gridContainer) {
+			// Clear existing content
+			gridContainer.innerHTML = '';
+
+			// Get unique options based on category and search term
+			const displayedOptions = new Set();
+			this.sections.forEach(section => {
+				if (this.activeCategory === 'ALL' || section.category === this.activeCategory) {
+					section.options.forEach(option => {
+						// Create a unique key for each option
+						const optionKey = `${option.label}-${option.category}`;
+
+						// Check if option matches search term
+						const matchesSearch = this.searchTerm === '' ||
+							option.label.toLowerCase().includes(this.searchTerm) ||
+							option.category.toLowerCase().includes(this.searchTerm);
+
+						if (!displayedOptions.has(optionKey) && matchesSearch) {
+							displayedOptions.add(optionKey);
+							this.createOptionCard(option, gridContainer);
+						}
+					});
+				}
+			});
+
+			// Show a message if no options match the search
+			if (displayedOptions.size === 0 && this.searchTerm !== '') {
+				const noResultsMsg = document.createElement('div');
+				noResultsMsg.textContent = `No results found for "${this.searchTerm}"`;
+				noResultsMsg.style.gridColumn = '1 / -1';
+				noResultsMsg.style.textAlign = 'center';
+				noResultsMsg.style.padding = '20px';
+				noResultsMsg.style.color = '#9CA3AF';
+				gridContainer.appendChild(noResultsMsg);
+			}
+		}
+	}
+
 	private createGridContainer(): void {
 		const gridContainer = document.createElement("div");
 		Object.assign(gridContainer.style, {
@@ -406,6 +477,12 @@ class KxsClientSecondaryMenu {
 			gridTemplateColumns: "repeat(3, 1fr)",
 			gap: "16px",
 			padding: "16px",
+			gridAutoRows: "minmax(150px, auto)",
+			overflowY: "auto",
+			overflowX: "hidden", // Prevent horizontal scrolling
+			maxHeight: "calc(3 * 150px + 2 * 16px)",
+			width: "100%",
+			boxSizing: "border-box" // Include padding in width calculation
 		});
 		gridContainer.id = "kxsMenuGrid";
 		this.menu.appendChild(gridContainer);
@@ -413,47 +490,8 @@ class KxsClientSecondaryMenu {
 
 	public addOption(section: MenuSection, option: MenuOption): void {
 		section.options.push(option);
-		const gridContainer = document.getElementById('kxsMenuGrid');
-		if (!gridContainer) return;
-
-		const optionCard = document.createElement("div");
-		Object.assign(optionCard.style, {
-			background: "rgba(31, 41, 55, 0.8)",
-			borderRadius: "10px",
-			padding: "16px",
-			display: "flex",
-			flexDirection: "column",
-			alignItems: "center",
-			gap: "12px",
-			minHeight: "150px",
-		});
-
-		const iconContainer = document.createElement("div");
-		Object.assign(iconContainer.style, {
-			width: "48px",
-			height: "48px",
-			borderRadius: "50%",
-			display: "flex",
-			alignItems: "center",
-			justifyContent: "center",
-			marginBottom: "8px"
-		});
-		iconContainer.innerHTML = option.icon || '';
-
-		const title = document.createElement("div");
-		title.textContent = option.label;
-		title.style.fontSize = "16px";
-		title.style.textAlign = "center";
-
-		const toggleBtn = option.type === "toggle"
-			? this.createToggleButton(option)
-			: this.createInputElement(option);
-
-		optionCard.appendChild(iconContainer);
-		optionCard.appendChild(title);
-		optionCard.appendChild(toggleBtn);
-
-		gridContainer.appendChild(optionCard);
+		// Store all options for searching
+		this.allOptions.push(option);
 	}
 
 	public addSection(title: string, category: "HUD" | "SERVER" | "MECHANIC" | "ALL" = "ALL"): MenuSection {
@@ -507,6 +545,8 @@ class KxsClientSecondaryMenu {
 				this.clearMenu();
 				this.toggleMenuVisibility();
 				this.loadOption();
+				// Ensure options are displayed after loading
+				this.filterOptions();
 			}
 		});
 	}
@@ -538,6 +578,8 @@ class KxsClientSecondaryMenu {
 			this.clearMenu();
 			this.toggleMenuVisibility();
 			this.loadOption();
+			// Ensure options are displayed after loading
+			this.filterOptions();
 		}
 	};
 
@@ -592,6 +634,11 @@ class KxsClientSecondaryMenu {
 		this.isClientMenuVisible = !this.isClientMenuVisible;
 		this.kxsClient.nm.showNotification(this.isClientMenuVisible ? "Opening menu..." : "Closing menu...", "info", 1400);
 		this.menu.style.display = this.isClientMenuVisible ? "block" : "none";
+
+		// If opening the menu, make sure to display options
+		if (this.isClientMenuVisible) {
+			this.filterOptions();
+		}
 	}
 
 	destroy() {
