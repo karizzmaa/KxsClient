@@ -174,8 +174,31 @@ class KxsClientHUD {
         padding: 20px !important;
         backdrop-filter: blur(10px) !important;
         max-width: 350px !important;
+        /* max-height: 80vh !important; */ /* Optionnel: Limiter la hauteur maximale */
         margin: auto !important;
         box-sizing: border-box !important;
+        overflow-y: auto !important; /* Permettre le défilement vertical si nécessaire */
+    }
+
+    .ui-game-menu-desktop::-webkit-scrollbar {
+        width: 8px !important;
+    }
+    .ui-game-menu-desktop::-webkit-scrollbar-track {
+        background: rgba(25, 25, 35, 0.5) !important;
+        border-radius: 10px !important;
+    }
+    .ui-game-menu-desktop::-webkit-scrollbar-thumb {
+        background-color: #4287f5 !important;
+        border-radius: 10px !important;
+        border: 2px solid rgba(25, 25, 35, 0.5) !important;
+    }
+    .ui-game-menu-desktop::-webkit-scrollbar-thumb:hover {
+        background-color: #5a9eff !important;
+    }
+
+    .ui-game-menu-desktop {
+        scrollbar-width: thin !important;
+        scrollbar-color: #4287f5 rgba(25, 25, 35, 0.5) !important;
     }
 
     .kxs-header {
