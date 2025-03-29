@@ -5,7 +5,6 @@ import { intercept } from "./intercept";
 
 import KxsClient from "./KxsClient";
 import { Config } from "./types/configtype";
-import { KxsLegacyClientSecondaryMenu } from "./ClientSecondaryMenu";
 import { LoadingScreen } from "./LoadingScreen";
 
 const packageInfo = require('../package.json');

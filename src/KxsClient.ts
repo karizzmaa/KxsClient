@@ -27,6 +27,7 @@ export default class KxsClient {
 	isKillLeaderTrackerEnabled: boolean;
 	isLegaySecondaryMenu: boolean;
 	isKillFeedBlint: boolean;
+	isSpotifyPlayerEnabled: boolean;
 	all_friends: string;
 
 	currentServer: string | null | undefined;
@@ -66,6 +67,7 @@ export default class KxsClient {
 		this.isKillLeaderTrackerEnabled = true;
 		this.isLegaySecondaryMenu = false;
 		this.isKillFeedBlint = false;
+		this.isSpotifyPlayerEnabled = false;
 		this.discordToken = null;
 		this.counters = {};
 		this.all_friends = '';
@@ -104,6 +106,10 @@ export default class KxsClient {
 		}
 
 		this.discordTracker = new DiscordTracking(this, this.discordWebhookUrl!);
+
+		if (this.isSpotifyPlayerEnabled) {
+			this.createSimpleSpotifyPlayer();
+		}
 	}
 
 	parseToken(token: string | null): string | null {
@@ -148,7 +154,8 @@ export default class KxsClient {
 				isKillLeaderTrackerEnabled: this.isKillLeaderTrackerEnabled,
 				isLegaySecondaryMenu: this.isLegaySecondaryMenu,
 				isKillFeedBlint: this.isKillFeedBlint,
-				all_friends: this.all_friends
+				all_friends: this.all_friends,
+				isSpotifyPlayerEnabled: this.isSpotifyPlayerEnabled
 			}),
 		);
 	};
@@ -599,6 +606,7 @@ export default class KxsClient {
 			this.isLegaySecondaryMenu = savedSettings.isLegaySecondaryMenu ?? this.isLegaySecondaryMenu
 			this.isKillFeedBlint = savedSettings.isKillFeedBlint ?? this.isKillFeedBlint;
 			this.all_friends = savedSettings.all_friends ?? this.all_friends;
+			this.isSpotifyPlayerEnabled = savedSettings.isSpotifyPlayerEnabled ?? this.isSpotifyPlayerEnabled;
 		}
 
 		this.updateKillsVisibility();
@@ -637,4 +645,326 @@ export default class KxsClient {
 		this.setAnimationFrameCallback();
 		this.saveFpsUncappedToLocalStorage();
 	}
+
+	createSimpleSpotifyPlayer() {
+		// Main container
+		const container = document.createElement('div');
+		container.id = 'spotify-player-container';
+		Object.assign(container.style, {
+			position: 'fixed',
+			bottom: '20px',
+			right: '20px',
+			width: '320px',
+			backgroundColor: '#121212',
+			borderRadius: '12px',
+			boxShadow: '0 8px 24px rgba(0, 0, 0, 0.5)',
+			overflow: 'hidden',
+			zIndex: '10000',
+			fontFamily: 'Montserrat, Arial, sans-serif',
+			transition: 'transform 0.3s ease, opacity 0.3s ease',
+			transform: 'translateY(0)',
+			opacity: '1'
+		});
+
+		// Player header
+		const header = document.createElement('div');
+		Object.assign(header.style, {
+			display: 'flex',
+			alignItems: 'center',
+			justifyContent: 'space-between',
+			padding: '12px 16px',
+			backgroundColor: '#070707',
+			color: 'white',
+			borderBottom: '1px solid #282828',
+			position: 'relative' // For absolute positioning of the button
+		});
+
+		// Spotify logo
+		const logo = document.createElement('div');
+		logo.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"><path fill="#1DB954" d="M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.66 0 12 0zm5.521 17.34c-.24.359-.66.48-1.021.24-2.82-1.74-6.36-2.101-10.561-1.141-.418.122-.779-.179-.899-.539-.12-.421.18-.78.54-.9 4.56-1.021 8.52-.6 11.64 1.32.42.18.479.659.301 1.02zm1.44-3.3c-.301.42-.841.6-1.262.3-3.239-1.98-8.159-2.58-11.939-1.38-.479.12-1.02-.12-1.14-.6-.12-.48.12-1.021.6-1.141C9.6 9.9 15 10.561 18.72 12.84c.361.181.54.78.241 1.2zm.12-3.36C15.24 8.4 8.82 8.16 5.16 9.301c-.6.179-1.2-.181-1.38-.721-.18-.601.18-1.2.72-1.381 4.26-1.26 11.28-1.02 15.721 1.621.539.3.719 1.02.419 1.56-.299.421-1.02.599-1.559.3z"/></svg>`;
+
+		const title = document.createElement('span');
+		title.textContent = 'Spotify Player';
+		title.style.marginLeft = '8px';
+		title.style.fontWeight = 'bold';
+
+		const logoContainer = document.createElement('div');
+		logoContainer.style.display = 'flex';
+		logoContainer.style.alignItems = 'center';
+		logoContainer.appendChild(logo);
+		logoContainer.appendChild(title);
+
+		// Control buttons
+		const controls = document.createElement('div');
+		controls.style.display = 'flex';
+		controls.style.alignItems = 'center';
+
+		// Minimize button
+		const minimizeBtn = document.createElement('button');
+		Object.assign(minimizeBtn.style, {
+			background: 'none',
+			border: 'none',
+			color: '#aaa',
+			cursor: 'pointer',
+			fontSize: '18px',
+			padding: '0',
+			marginLeft: '10px',
+			width: '24px',
+			height: '24px',
+			display: 'flex',
+			alignItems: 'center',
+			justifyContent: 'center'
+		});
+		minimizeBtn.innerHTML = '−';
+		minimizeBtn.title = 'Minimize';
+
+		// Close button
+		const closeBtn = document.createElement('button');
+		Object.assign(closeBtn.style, {
+			background: 'none',
+			border: 'none',
+			color: '#aaa',
+			cursor: 'pointer',
+			fontSize: '18px',
+			padding: '0',
+			marginLeft: '10px',
+			width: '24px',
+			height: '24px',
+			display: 'flex',
+			alignItems: 'center',
+			justifyContent: 'center'
+		});
+		closeBtn.innerHTML = '×';
+		closeBtn.title = 'Close';
+
+		controls.appendChild(minimizeBtn);
+		controls.appendChild(closeBtn);
+
+		header.appendChild(logoContainer);
+		header.appendChild(controls);
+
+		// Album cover image
+		const albumArt = document.createElement('div');
+		Object.assign(albumArt.style, {
+			width: '50px',
+			height: '50px',
+			backgroundColor: '#333',
+			backgroundSize: 'cover',
+			backgroundPosition: 'center',
+			borderRadius: '4px',
+			flexShrink: '0'
+		});
+		albumArt.style.backgroundImage = `url('https://i.scdn.co/image/ab67616d00001e02fe24b9ffeb3c3fdb4f9abbe9')`;
+
+		// Track information
+		const trackInfo = document.createElement('div');
+		Object.assign(trackInfo.style, {
+			flex: '1',
+			overflow: 'hidden'
+		});
+		// Player content
+		const content = document.createElement('div');
+		content.style.padding = '0';
+
+		// Spotify iframe
+		const iframe = document.createElement('iframe');
+		iframe.id = 'spotify-player-iframe';
+		iframe.src = 'https://open.spotify.com/embed/playlist/37i9dQZEVXcJZyENOWUFo7';
+		iframe.width = '100%';
+		iframe.height = '80px';
+		iframe.frameBorder = '0';
+		iframe.allow = 'encrypted-media';
+		iframe.style.border = 'none';
+
+		content.appendChild(iframe);
+
+		// Playlist change button integrated in the header
+		const changePlaylistContainer = document.createElement('div');
+		Object.assign(changePlaylistContainer.style, {
+			display: 'flex',
+			alignItems: 'center',
+			marginRight: '10px'
+		});
+
+		// Square button to enter a playlist ID
+		const changePlaylistBtn = document.createElement('button');
+		Object.assign(changePlaylistBtn.style, {
+			width: '24px',
+			height: '24px',
+			backgroundColor: '#1DB954',
+			color: 'white',
+			border: 'none',
+			borderRadius: '4px',
+			fontSize: '14px',
+			fontWeight: 'bold',
+			cursor: 'pointer',
+			display: 'flex',
+			alignItems: 'center',
+			justifyContent: 'center',
+			margin: '0 8px 0 0'
+		});
+		changePlaylistBtn.innerHTML = `
+			<svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+				<path d="M12 5V19M5 12H19" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+			</svg>
+		`;
+
+		changePlaylistBtn.addEventListener('click', () => {
+			const id = prompt('Enter the Spotify playlist ID:', '37i9dQZEVXcJZyENOWUFo7');
+			if (id) {
+				iframe.src = `https://open.spotify.com/embed/playlist/${id}`;
+				localStorage.setItem('kxsSpotifyPlaylist', id);
+
+
+				// Simulate an album cover based on the playlist ID
+				albumArt.style.backgroundImage = `url('https://i.scdn.co/image/ab67706f00000002${id.substring(0, 16)}')`;
+			}
+		});
+
+		changePlaylistContainer.appendChild(changePlaylistBtn);
+
+		// Load saved playlist
+		const savedPlaylist = localStorage.getItem('kxsSpotifyPlaylist');
+		if (savedPlaylist) {
+			iframe.src = `https://open.spotify.com/embed/playlist/${savedPlaylist}`;
+
+			// Simuler une pochette d'album basée sur l'ID de la playlist
+			albumArt.style.backgroundImage = `url('https://i.scdn.co/image/ab67706f00000002${savedPlaylist.substring(0, 16)}')`;
+		}
+
+		// Integrate the playlist change button into the controls
+		controls.insertBefore(changePlaylistContainer, minimizeBtn);
+
+		// Assemble the elements
+		container.appendChild(header);
+		container.appendChild(content);
+
+		// Add a title to the button for accessibility
+		changePlaylistBtn.title = "Change playlist";
+
+		// Add to document
+		document.body.appendChild(container);
+
+		// Player states
+		let isMinimized = false;
+
+		// Events
+		minimizeBtn.addEventListener('click', () => {
+			if (isMinimized) {
+				content.style.display = 'block';
+				changePlaylistContainer.style.display = 'block';
+				container.style.transform = 'translateY(0)';
+				minimizeBtn.innerHTML = '−';
+			} else {
+				content.style.display = 'none';
+				changePlaylistContainer.style.display = 'none';
+				container.style.transform = 'translateY(0)';
+				minimizeBtn.innerHTML = '+';
+			}
+			isMinimized = !isMinimized;
+		});
+
+		closeBtn.addEventListener('click', () => {
+			container.style.transform = 'translateY(150%)';
+			container.style.opacity = '0';
+			setTimeout(() => {
+				container.style.display = 'none';
+				showButton.style.display = 'flex';
+				showButton.style.alignItems = 'center';
+				showButton.style.justifyContent = 'center';
+			}, 300);
+		});
+
+		// Make the player draggable
+		let isDragging = false;
+		let offsetX: number = 0;
+		let offsetY: number = 0;
+
+		header.addEventListener('mousedown', (e) => {
+			isDragging = true;
+			offsetX = e.clientX - container.getBoundingClientRect().left;
+			offsetY = e.clientY - container.getBoundingClientRect().top;
+			container.style.transition = 'none';
+		});
+
+		document.addEventListener('mousemove', (e) => {
+			if (isDragging) {
+				container.style.right = 'auto';
+				container.style.bottom = 'auto';
+				container.style.left = (e.clientX - offsetX) + 'px';
+				container.style.top = (e.clientY - offsetY) + 'px';
+			}
+		});
+
+		document.addEventListener('mouseup', () => {
+			isDragging = false;
+			container.style.transition = 'transform 0.3s ease, opacity 0.3s ease';
+		});
+
+		// Button to show the player again
+		const showButton = document.createElement('button');
+		showButton.id = 'spotify-float-button';
+		Object.assign(showButton.style, {
+			position: 'fixed',
+			bottom: '20px',
+			right: '20px',
+			width: '50px',
+			height: '50px',
+			borderRadius: '50%',
+			backgroundColor: '#1DB954',
+			color: 'white',
+			border: 'none',
+			boxShadow: '0 4px 12px rgba(0, 0, 0, 0.3)',
+			cursor: 'pointer',
+			zIndex: '9999',
+			fontSize: '24px',
+			transition: 'transform 0.2s ease',
+			display: 'flex',
+			alignItems: 'center',
+			justifyContent: 'center'
+		});
+		showButton.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path fill="white" d="M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.66 0 12 0zm5.521 17.34c-.24.359-.66.48-1.021.24-2.82-1.74-6.36-2.101-10.561-1.141-.418.122-.779-.179-.899-.539-.12-.421.18-.78.54-.9 4.56-1.021 8.52-.6 11.64 1.32.42.18.479.659.301 1.02zm1.44-3.3c-.301.42-.841.6-1.262.3-3.239-1.98-8.159-2.58-11.939-1.38-.479.12-1.02-.12-1.14-.6-.12-.48.12-1.021.6-1.141C9.6 9.9 15 10.561 18.72 12.84c.361.181.54.78.241 1.2zm.12-3.36C15.24 8.4 8.82 8.16 5.16 9.301c-.6.179-1.2-.181-1.38-.721-.18-.601.18-1.2.72-1.381 4.26-1.26 11.28-1.02 15.721 1.621.539.3.719 1.02.419 1.56-.299.421-1.02.599-1.559.3z"/></svg>`;
+
+		document.body.appendChild(showButton);
+
+		showButton.addEventListener('mouseenter', () => {
+			showButton.style.transform = 'scale(1.1)';
+		});
+
+		showButton.addEventListener('mouseleave', () => {
+			showButton.style.transform = 'scale(1)';
+		});
+
+		showButton.addEventListener('click', () => {
+			container.style.display = 'block';
+			container.style.transform = 'translateY(0)';
+			container.style.opacity = '1';
+			showButton.style.display = 'none';
+		});
+
+		return container;
+	}
+
+	toggleSpotifyMenu() {
+		if (this.isSpotifyPlayerEnabled) {
+			this.createSimpleSpotifyPlayer();
+		} else {
+			this.removeSimpleSpotifyPlayer();
+		}
+	}
+
+	removeSimpleSpotifyPlayer() {
+		// Supprimer le conteneur principal du lecteur
+		const container = document.getElementById('spotify-player-container');
+		if (container) {
+			container.remove();
+		}
+
+		// Supprimer aussi le bouton flottant grâce à son ID
+		const floatButton = document.getElementById('spotify-float-button');
+		if (floatButton) {
+			floatButton.remove();
+		}
+	}
+
 }

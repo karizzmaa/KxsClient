@@ -206,6 +206,17 @@ class KxsLegacyClientSecondaryMenu {
 			},
 		});
 
+		this.addOption(HUD, {
+			label: `Spotify Player`,
+			value: this.kxsClient.isSpotifyPlayerEnabled,
+			type: "toggle",
+			onChange: () => {
+				this.kxsClient.isSpotifyPlayerEnabled = !this.kxsClient.isSpotifyPlayerEnabled;
+				this.kxsClient.updateLocalStorage();
+				this.kxsClient.toggleSpotifyMenu();
+			},
+		});
+
 		this.addOption(pluginsSection, {
 			label: `Uncap FPS`,
 			value: this.kxsClient.isFpsUncapped,
