@@ -98,7 +98,7 @@ class KxsClientHUD {
 
 					// Check if a friend is mentioned
 					for (let friend of all_friends) {
-						if (text.includes(friend)) {
+						if (friend !== "" && text.includes(friend)) {
 							// Check if the friend is in the cache and if the cache is still valid
 							// @ts-ignore
 							const lastSeen = friendsCache[friend];
