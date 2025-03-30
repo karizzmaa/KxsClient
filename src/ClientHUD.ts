@@ -881,7 +881,13 @@ class KxsClientHUD {
 			whiteSpace: "nowrap", // Empêche le retour à la ligne
 		});
 
-		animation.textContent = `${isPositive ? "+" : ""}${change} HP`;
+		// Check if change is a valid number before displaying it
+		if (!isNaN(change)) {
+			animation.textContent = `${isPositive ? "+" : ""}${change} HP`;
+		} else {
+			// Skip showing animation if change is NaN
+			return;
+		}
 
 		container.appendChild(animation);
 
