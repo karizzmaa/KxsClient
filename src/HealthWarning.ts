@@ -2,8 +2,6 @@ import KxsClient from "./KxsClient";
 
 class HealthWarning {
 	private warningElement: HTMLDivElement | null;
-	private offsetX: number = 20; // Distance depuis le curseur
-	private offsetY: number = 20;
 	kxsClient: KxsClient;
 
 	constructor(kxsClient: KxsClient) {
@@ -11,7 +9,7 @@ class HealthWarning {
 		this.kxsClient = kxsClient;
 
 		this.createWarningElement();
-		this.initMouseTracking();
+		this.setFixedPosition();
 	}
 
 	private createWarningElement() {
@@ -30,7 +28,6 @@ class HealthWarning {
             z-index: 9999;
             display: none;
             backdrop-filter: blur(5px);
-            transition: transform 0.1s ease;
             pointer-events: none;
         `;
 
@@ -63,26 +60,15 @@ class HealthWarning {
 		this.addPulseAnimation();
 	}
 
-	private initMouseTracking() {
-		document.addEventListener("mousemove", (e: MouseEvent) => {
-			if (!this.warningElement || this.warningElement.style.display === "none")
-				return;
+	private setFixedPosition() {
+		if (!this.warningElement) return;
 
-			const x = e.clientX + this.offsetX;
-			const y = e.clientY + this.offsetY;
+		// Example
+		this.warningElement.style.top = "20px";
+		this.warningElement.style.left = "20px";
 
-			// Empêcher l'alerte de sortir de l'écran
-			const rect = this.warningElement.getBoundingClientRect();
-			const maxX = window.innerWidth - rect.width;
-			const maxY = window.innerHeight - rect.height;
-
-			const finalX = Math.min(Math.max(0, x), maxX);
-			const finalY = Math.min(Math.max(0, y), maxY);
-
-			this.warningElement.style.transform = `translate(${finalX}px, ${finalY}px)`;
-		});
+		//OR use transform use somethin like, this.warningElement.style.transform = `translate(20px, 20px)`; 
 	}
-
 	private addPulseAnimation() {
 		const keyframes = `
             @keyframes pulse {
