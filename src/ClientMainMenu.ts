@@ -4,17 +4,17 @@ import KxsClient from "./KxsClient";
 
 class KxsMainClientMenu {
 	menuManager: MenuManager | undefined;
-	menu: HTMLDivElement;
+	menu: HTMLDivElement | undefined;
 	kxsClient: KxsClient;
 
 	constructor(kxsClient: KxsClient) {
 		this.kxsClient = kxsClient;
-		this.menu = document.createElement("div");
-		this.setupKeyListeners();
+		// this.setupKeyListeners();
 		// this.initMenu();
 	}
 
 	initMenu() {
+		this.menu = document.createElement("div");
 		this.menu.id = "kxsMenu";
 		Object.assign(this.menu.style, {
 			backgroundColor: "rgba(0, 0, 0, 0.8)",

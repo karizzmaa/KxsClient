@@ -4,7 +4,7 @@ import KxsClient from "./KxsClient";
 interface MenuOption {
 	label: string;
 	value: string | boolean | number;
-	type: "toggle" | "input";
+	type: "toggle" | "input" | "click";
 	onChange?: (value: string | boolean) => void;
 }
 
@@ -270,6 +270,55 @@ class KxsLegacyClientSecondaryMenu {
 				this.kxsClient.updateLocalStorage();
 			},
 		});
+
+		this.addOption(HUD, {
+			label: `Change Background`,
+			value: true,
+			type: "click",
+			onChange: () => {
+				const backgroundElement = document.getElementById("background");
+				if (!backgroundElement) {
+					alert("Element with id 'background' not found.");
+					return;
+				}
+				const choice = prompt(
+					"Enter '0' to default Kxs background, '1' to provide a URL or '2' to upload a local image:",
+				);
+
+				if (choice === "0") {
+					localStorage.removeItem("lastBackgroundUrl");
+					localStorage.removeItem("lastBackgroundFile");
+					localStorage.removeItem("lastBackgroundType");
+					localStorage.removeItem("lastBackgroundValue");
+				} else if (choice === "1") {
+					const newBackgroundUrl = prompt(
+						"Enter the URL of the new background image:",
+					);
+					if (newBackgroundUrl) {
+						backgroundElement.style.backgroundImage = `url(${newBackgroundUrl})`;
+						this.kxsClient.saveBackgroundToLocalStorage(newBackgroundUrl);
+						alert("Background updated successfully!");
+					}
+				} else if (choice === "2") {
+					const fileInput = document.createElement("input");
+					fileInput.type = "file";
+					fileInput.accept = "image/*";
+					fileInput.onchange = (event) => {
+						const file = (event.target as HTMLInputElement)?.files?.[0];
+						if (file) {
+							const reader = new FileReader();
+							reader.onload = () => {
+								backgroundElement.style.backgroundImage = `url(${reader.result})`;
+								this.kxsClient.saveBackgroundToLocalStorage(file);
+								alert("Background updated successfully!");
+							};
+							reader.readAsDataURL(file);
+						}
+					};
+					fileInput.click();
+				}
+			},
+		});
 	}
 
 	private clearMenu(): void {
@@ -368,13 +417,22 @@ class KxsLegacyClientSecondaryMenu {
 		label.textContent = option.label;
 		label.style.color = "#fff";
 
-		const valueElement =
-			option.type === "toggle"
-				? this.createToggleElement(option)
-				: this.createInputElement(option);
+		let valueElement: null | HTMLElement = null;
+
+		switch (option.type) {
+			case "toggle":
+				valueElement = this.createToggleElement(option);
+				break;
+			case "input":
+				valueElement = this.createInputElement(option);
+				break;
+			case "click":
+				valueElement = this.createClickElement(option);
+				break;
+		}
 
 		optionDiv.appendChild(label);
-		optionDiv.appendChild(valueElement);
+		optionDiv.appendChild(valueElement!);
 
 		// Utiliser la référence stockée à l'élément de section
 		if (section.element) {
@@ -397,6 +455,24 @@ class KxsLegacyClientSecondaryMenu {
 		});
 
 		return toggle;
+	}
+
+	private createClickElement(option: MenuOption): HTMLElement {
+		const button = document.createElement("button");
+		button.textContent = option.label;
+		button.style.backgroundColor = "rgba(255, 255, 255, 0.1)";
+		button.style.border = "none";
+		button.style.borderRadius = "3px";
+		button.style.color = "#FFAE00";
+		button.style.padding = "2px 5px";
+		button.style.cursor = "pointer";
+		button.style.fontSize = "12px";
+
+		button.addEventListener("click", () => {
+			option.onChange?.(true);
+		});
+
+		return button;
 	}
 
 	private createInputElement(option: MenuOption): HTMLElement {
