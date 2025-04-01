@@ -1,4 +1,5 @@
 import KxsClient from "./KxsClient";
+import gt from 'semver/functions/gt';
 
 const packageInfo = require('../package.json');
 const config = require('../config.json');
@@ -90,7 +91,8 @@ class UpdateChecker {
 		const hostedScriptVersion = await this.getNewScriptVersion();
 		this.hostedScriptVersion = hostedScriptVersion;
 
-		if (localScriptVersion !== hostedScriptVersion) {
+		// Vérifie si la version hébergée est supérieure à la version locale
+		if (gt(hostedScriptVersion, localScriptVersion)) {
 			this.displayUpdateNotification();
 		} else {
 			this.kxsClient.nm.showNotification("Client is up to date", "success", 2300);
