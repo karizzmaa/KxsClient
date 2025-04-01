@@ -16,6 +16,7 @@ class KillLeaderTracker {
 		this.warningElement = null;
 		this.encouragementElement = null;
 		this.killLeaderKillCount = 0;
+		this.wasKillLeader = false;
 		this.createEncouragementElement();
 		this.initMouseTracking();
 	}
