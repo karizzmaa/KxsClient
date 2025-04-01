@@ -467,6 +467,7 @@ export default class KxsClient {
 			if (event.button === 0) {
 				// Left click only
 				isDragging = true;
+				gridSystem.toggleGrid(); // Afficher la grille quand on commence à déplacer
 				dragOffset = {
 					x: event.clientX - element.offsetLeft,
 					y: event.clientY - element.offsetTop,
@@ -507,6 +508,7 @@ export default class KxsClient {
 		window.addEventListener("mouseup", () => {
 			if (isDragging) {
 				isDragging = false;
+				gridSystem.toggleGrid(); // Masquer la grille quand on arrête de déplacer
 				element.style.cursor = "move";
 			}
 		});
