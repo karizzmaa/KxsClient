@@ -26,7 +26,7 @@ class PingTest {
 			isWebSocket: selectedServer.url.startsWith("ws://") || selectedServer.url.startsWith("wss://"),
 		};
 	}
-
+//check to see if urls match
 	private getMatchingGameUrl() {
 		const gameUrls = [
 			"*://survev.io/*",
