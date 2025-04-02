@@ -155,10 +155,39 @@ class KxsClientSecondaryMenu {
 		});
 
 		const searchInput = header.querySelector('#kxsSearchInput') as HTMLInputElement;
-		searchInput?.addEventListener('input', (e) => {
-			this.searchTerm = (e.target as HTMLInputElement).value.toLowerCase();
-			this.filterOptions();
-		});
+		if (searchInput) {
+			// Gestionnaire pour mettre à jour la recherche
+			searchInput.addEventListener('input', (e) => {
+				this.searchTerm = (e.target as HTMLInputElement).value.toLowerCase();
+				this.filterOptions();
+			});
+
+			// Empêcher les touches d'être interprétées par le jeu
+			// On bloque uniquement la propagation des événements clavier, sauf pour les touches spéciales
+			['keydown', 'keyup', 'keypress'].forEach(eventType => {
+				searchInput.addEventListener(eventType, (e: Event) => {
+					const keyEvent = e as KeyboardEvent;
+
+					// Ne pas bloquer les touches spéciales (Escape, Shift)
+					if (keyEvent.key === 'Escape' || (keyEvent.key === 'Shift' && keyEvent.location === 2)) {
+						return; // Laisser l'événement se propager normalement
+					}
+
+					// Bloquer la propagation pour toutes les autres touches
+					e.stopPropagation();
+				});
+			});
+
+			// Assurer que le champ garde le focus
+			searchInput.addEventListener('blur', () => {
+				// Retarder légèrement pour permettre d'autres interactions
+				setTimeout(() => {
+					if (this.isClientMenuVisible) {
+						searchInput.focus();
+					}
+				}, 100);
+			});
+		}
 
 		this.menu.appendChild(header);
 	}
