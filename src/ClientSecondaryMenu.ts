@@ -108,6 +108,17 @@ class KxsLegacyClientSecondaryMenu {
 		});
 
 		this.addOption(HUD, {
+			label: "Clean Main Menu",
+			value: this.kxsClient.isMainMenuCleaned,
+			type: "toggle",
+			onChange: (value) => {
+				this.kxsClient.isMainMenuCleaned = !this.kxsClient.isMainMenuCleaned
+				this.kxsClient.MainMenuCleaning();
+				this.kxsClient.updateLocalStorage()
+			},
+		});
+
+		this.addOption(HUD, {
 			label: "Show Ping",
 			value: this.kxsClient.isPingVisible,
 			type: "toggle",

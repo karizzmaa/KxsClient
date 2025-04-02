@@ -28,6 +28,7 @@ export default class KxsClient {
 	isLegaySecondaryMenu: boolean;
 	isKillFeedBlint: boolean;
 	isSpotifyPlayerEnabled: boolean;
+	isMainMenuCleaned: boolean;
 	all_friends: string;
 
 	currentServer: string | null | undefined;
@@ -71,6 +72,7 @@ export default class KxsClient {
 		this.discordToken = null;
 		this.counters = {};
 		this.all_friends = '';
+		this.isMainMenuCleaned = false;
 
 		this.defaultPositions = {
 			fps: { left: 20, top: 160 },
@@ -110,6 +112,8 @@ export default class KxsClient {
 		if (this.isSpotifyPlayerEnabled) {
 			this.createSimpleSpotifyPlayer();
 		}
+
+		this.MainMenuCleaning();
 	}
 
 	parseToken(token: string | null): string | null {
@@ -155,7 +159,8 @@ export default class KxsClient {
 				isLegaySecondaryMenu: this.isLegaySecondaryMenu,
 				isKillFeedBlint: this.isKillFeedBlint,
 				all_friends: this.all_friends,
-				isSpotifyPlayerEnabled: this.isSpotifyPlayerEnabled
+				isSpotifyPlayerEnabled: this.isSpotifyPlayerEnabled,
+				isMainMenuCleaned: this.isMainMenuCleaned
 			}),
 		);
 	};
@@ -609,6 +614,7 @@ export default class KxsClient {
 			this.isKillFeedBlint = savedSettings.isKillFeedBlint ?? this.isKillFeedBlint;
 			this.all_friends = savedSettings.all_friends ?? this.all_friends;
 			this.isSpotifyPlayerEnabled = savedSettings.isSpotifyPlayerEnabled ?? this.isSpotifyPlayerEnabled;
+			this.isMainMenuCleaned = savedSettings.isMainMenuCleaned ?? this.isMainMenuCleaned;
 		}
 
 		this.updateKillsVisibility();
@@ -952,6 +958,92 @@ export default class KxsClient {
 			this.createSimpleSpotifyPlayer();
 		} else {
 			this.removeSimpleSpotifyPlayer();
+		}
+	}
+
+	private adBlockObserver: MutationObserver | null = null;
+
+	MainMenuCleaning() {
+		// Déconnecter l'observateur précédent s'il existe
+		if (this.adBlockObserver) {
+			this.adBlockObserver.disconnect();
+			this.adBlockObserver = null;
+		}
+
+		// Sélectionne les éléments à masquer/afficher
+		const newsWrapper = document.getElementById('news-wrapper');
+		const adBlockLeft = document.getElementById('ad-block-left');
+		const socialLeft = document.getElementById('social-share-block-wrapper');
+		const leftCollun = document.getElementById('left-column');
+
+		const elementsToMonitor = [
+			{ element: newsWrapper, id: 'news-wrapper' },
+			{ element: adBlockLeft, id: 'ad-block-left' },
+			{ element: socialLeft, id: 'social-share-block-wrapper' },
+			{ element: leftCollun, id: 'left-column' }
+		];
+
+		if (this.isMainMenuCleaned) {
+			// Mode clean: masquer les éléments
+			elementsToMonitor.forEach(item => {
+				if (item.element) item.element.style.display = 'none';
+			});
+
+			// Créer un observateur pour empêcher que le site ne réaffiche les éléments
+			this.adBlockObserver = new MutationObserver((mutations) => {
+				let needsUpdate = false;
+
+				mutations.forEach(mutation => {
+					if (mutation.type === 'attributes' && mutation.attributeName === 'style') {
+						const target = mutation.target as HTMLElement;
+
+						// Vérifier si l'élément est un de ceux que nous surveillons
+						if (elementsToMonitor.some(item => item.id === target.id && target.style.display !== 'none')) {
+							target.style.display = 'none';
+							needsUpdate = true;
+						}
+					}
+				});
+
+				// Si le site essaie de réafficher un élément publicitaire, on l'empêche
+				if (needsUpdate) {
+					console.log('[KxsClient] Détection de tentative de réaffichage de publicités - Masquage forcé');
+				}
+			});
+
+			// Observer les changements de style sur les éléments
+			elementsToMonitor.forEach(item => {
+				if (item.element && this.adBlockObserver) {
+					this.adBlockObserver.observe(item.element, {
+						attributes: true,
+						attributeFilter: ['style']
+					});
+				}
+			});
+
+			// Vérifier également le document body pour de nouveaux éléments ajoutés
+			const bodyObserver = new MutationObserver(() => {
+				// Réappliquer notre nettoyage après un court délai
+				setTimeout(() => {
+					if (this.isMainMenuCleaned) {
+						elementsToMonitor.forEach(item => {
+							const element = document.getElementById(item.id);
+							if (element && element.style.display !== 'none') {
+								element.style.display = 'none';
+							}
+						});
+					}
+				}, 100);
+			});
+
+			// Observer les changements dans le DOM
+			bodyObserver.observe(document.body, { childList: true, subtree: true });
+
+		} else {
+			// Mode normal: rétablir l'affichage
+			elementsToMonitor.forEach(item => {
+				if (item.element) item.element.style.display = 'block';
+			});
 		}
 	}
 
