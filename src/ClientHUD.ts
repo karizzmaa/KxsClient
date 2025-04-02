@@ -596,8 +596,8 @@ class KxsClientHUD {
 			borderRadius: "5px",
 			fontFamily: "Arial, sans-serif",
 			padding: "5px 10px",
-			pointerEvents: "auto",
-			cursor: "move",
+			pointerEvents: "none",
+			cursor: "default",
 			width: `${this.kxsClient.defaultSizes[name].width}px`,
 			height: `${this.kxsClient.defaultSizes[name].height}px`,
 			display: "flex",
@@ -780,6 +780,9 @@ class KxsClientHUD {
 			"#start-menu .play-button-container",
 		);
 
+		// Update counters draggable state based on LSHIFT menu visibility
+		this.updateCountersDraggableState();
+
 		if (!playerOptions) return;
 
 		if (
@@ -896,6 +899,19 @@ class KxsClientHUD {
 			startTime: performance.now(),
 			duration: 1500, // Animation duration in milliseconds
 			value: change,
+		});
+	}
+
+	private updateCountersDraggableState() {
+		const isMenuOpen = this.kxsClient.secondaryMenu?.getMenuVisibility() || false;
+		const counters = ['fps', 'kills', 'ping'];
+
+		counters.forEach(name => {
+			const counter = document.getElementById(`${name}Counter`);
+			if (counter) {
+				counter.style.pointerEvents = isMenuOpen ? 'auto' : 'none';
+				counter.style.cursor = isMenuOpen ? 'move' : 'default';
+			}
 		});
 	}
 

@@ -554,6 +554,10 @@ class KxsLegacyClientSecondaryMenu {
 		this.boundMouseMoveListener = null as any;
 		this.boundMouseUpListener = null as any;
 	}
+
+	getMenuVisibility(): boolean {
+		return this.isClientMenuVisible;
+	}
 }
 
 export { KxsLegacyClientSecondaryMenu, type MenuSection, type MenuOption };

@@ -782,6 +782,10 @@ class KxsClientSecondaryMenu {
 		this.menu = null as any;
 		this.kxsClient = null as any;
 	}
+
+	getMenuVisibility(): boolean {
+		return this.isClientMenuVisible;
+	}
 }
 
 export { KxsClientSecondaryMenu, type MenuSection, type MenuOption };
