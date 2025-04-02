@@ -17,7 +17,7 @@ class PingTest {
 			region: selectedServer.region,
 			url: selectedServer.url.startsWith("ws://") || selectedServer.url.startsWith("wss://")
 				? selectedServer.url
-				: `https://${selectedServer.url}/ping`, // If not WebSocket, assume HTTP
+				: `https://${selectedServer.url}`, // Store the base URL without /ping for HTTP
 			ping: 0, // Initialize to 0 instead of 9999
 			ws: null,
 			sendTime: 0,
@@ -26,7 +26,7 @@ class PingTest {
 			isWebSocket: selectedServer.url.startsWith("ws://") || selectedServer.url.startsWith("wss://"),
 		};
 	}
-//check to see if urls match
+	//check to see if urls match
 	private getMatchingGameUrl() {
 		const gameUrls = [
 			"*://survev.io/*",
@@ -42,12 +42,12 @@ class PingTest {
 			"*://eu-comp.net/*",
 			"*://survev.leia-is.gay/*"
 		];
-		
+
 		const currentDomain = window.location.hostname;
 		for (let i = 0; i < gameUrls.length; i++) {
-			const url = new URL(gameUrls[i].replace('*://', 'http://')); 
+			const url = new URL(gameUrls[i].replace('*://', 'http://'));
 			if (currentDomain === url.hostname) {
-				return gameUrls[i]; 
+				return gameUrls[i];
 			}
 		}
 		console.warn("No matching game URL found for the current domain");
@@ -55,16 +55,12 @@ class PingTest {
 	}
 
 	startPingTest() {
-		if (this.test.isConnecting) return; 
+		if (this.test.isConnecting) return;
 		this.test.isConnecting = true;
-		const matchingUrl = this.getMatchingGameUrl();
-		if (matchingUrl) {
-			this.test.url = matchingUrl; 
-		} else {
-			console.error("No valid URL for ping test found.");
-			this.handleConnectionError();
-			return;
-		}
+
+		// We don't need to replace the URL with a matching game URL
+		// because we want to test the ping to the specific server selected
+		// The URL was already properly set in the constructor
 
 		if (this.test.isWebSocket) {
 			try {
@@ -108,18 +104,31 @@ class PingTest {
 	}
 
 	private sendHttpPing() {
+		// Use image loading technique to avoid CORS issues
 		this.test.sendTime = Date.now();
 
-		fetch(this.test.url, { method: "HEAD", cache: "no-cache" })
-			.then(() => {
-				const elapsed = Date.now() - this.test.sendTime;
-				this.test.ping = Math.min(Math.round(elapsed), 999); 
-				setTimeout(() => this.sendHttpPing(), 250);
-			})
-			.catch((error) => {
-				console.error("HTTP Ping error:", error);
-				this.handleConnectionError();
-			});
+		// Create a new image element
+		const img = new Image();
+
+		// Set up load and error handlers
+		img.onload = () => {
+			const elapsed = Date.now() - this.test.sendTime;
+			this.test.ping = Math.min(Math.round(elapsed), 999);
+			setTimeout(() => this.sendHttpPing(), 250);
+		};
+
+		img.onerror = () => {
+			// Even if the image fails to load, we can still measure the time it took to fail
+			// This gives us an approximate ping time
+			const elapsed = Date.now() - this.test.sendTime;
+			this.test.ping = Math.min(Math.round(elapsed), 999);
+			setTimeout(() => this.sendHttpPing(), 250);
+		};
+
+		// Add a cache-busting parameter to prevent caching
+		const cacheBuster = Date.now();
+		const baseUrl = this.test.url.replace('/ping', '');
+		img.src = `${baseUrl}/favicon.ico?cb=${cacheBuster}`;
 	}
 
 	private handleConnectionError() {
