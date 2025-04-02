@@ -963,6 +963,167 @@ export default class KxsClient {
 
 	private adBlockObserver: MutationObserver | null = null;
 
+	applyCustomMainMenuStyle() {
+		// Sélectionner le menu principal
+		const startMenu = document.getElementById('start-menu');
+		const playButtons = document.querySelectorAll('.btn-green, #btn-help, .btn-team-option');
+		const playerOptions = document.getElementById('player-options');
+		const serverSelect = document.getElementById('server-select-main');
+		const nameInput = document.getElementById('player-name-input-solo');
+		const helpSection = document.getElementById('start-help');
+
+		if (startMenu) {
+			// Appliquer des styles au conteneur principal
+			Object.assign(startMenu.style, {
+				background: 'linear-gradient(135deg, rgba(25, 25, 35, 0.95) 0%, rgba(15, 15, 25, 0.98) 100%)',
+				border: '1px solid rgba(255, 255, 255, 0.1)',
+				borderRadius: '12px',
+				boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3)',
+				padding: '15px',
+				backdropFilter: 'blur(10px)',
+				margin: '0 auto'
+			});
+		}
+
+		// Styliser les boutons
+		playButtons.forEach(button => {
+			if (button instanceof HTMLElement) {
+				if (button.classList.contains('btn-green')) {
+					// Boutons Play
+					Object.assign(button.style, {
+						background: 'linear-gradient(135deg, #4287f5 0%, #3b76d9 100%)',
+						borderRadius: '8px',
+						border: '1px solid rgba(255, 255, 255, 0.2)',
+						boxShadow: '0 4px 12px rgba(0, 0, 0, 0.2)',
+						transition: 'all 0.2s ease',
+						color: 'white',
+						fontWeight: 'bold'
+					});
+				} else {
+					// Autres boutons
+					Object.assign(button.style, {
+						background: 'rgba(40, 45, 60, 0.7)',
+						borderRadius: '8px',
+						border: '1px solid rgba(255, 255, 255, 0.1)',
+						transition: 'all 0.2s ease',
+						color: 'white'
+					});
+				}
+
+				// Effet de survol pour tous les boutons
+				button.addEventListener('mouseover', () => {
+					button.style.transform = 'translateY(-2px)';
+					button.style.boxShadow = '0 6px 16px rgba(0, 0, 0, 0.3)';
+					button.style.filter = 'brightness(1.1)';
+				});
+
+				button.addEventListener('mouseout', () => {
+					button.style.transform = 'translateY(0)';
+					button.style.boxShadow = button.classList.contains('btn-green') ?
+						'0 4px 12px rgba(0, 0, 0, 0.2)' : 'none';
+					button.style.filter = 'brightness(1)';
+				});
+			}
+		});
+
+		// Styliser le sélecteur de serveur
+		if (serverSelect instanceof HTMLSelectElement) {
+			Object.assign(serverSelect.style, {
+				background: 'rgba(30, 35, 50, 0.8)',
+				borderRadius: '8px',
+				border: '1px solid rgba(255, 255, 255, 0.1)',
+				color: 'white',
+				padding: '8px 12px',
+				outline: 'none'
+			});
+		}
+
+		// Styliser l'input du nom
+		if (nameInput instanceof HTMLInputElement) {
+			Object.assign(nameInput.style, {
+				background: 'rgba(30, 35, 50, 0.8)',
+				borderRadius: '8px',
+				border: '1px solid rgba(255, 255, 255, 0.1)',
+				color: 'white',
+				padding: '8px 12px',
+				outline: 'none'
+			});
+
+			// Focus style
+			nameInput.addEventListener('focus', () => {
+				nameInput.style.border = '1px solid #4287f5';
+				nameInput.style.boxShadow = '0 0 8px rgba(66, 135, 245, 0.5)';
+			});
+
+			nameInput.addEventListener('blur', () => {
+				nameInput.style.border = '1px solid rgba(255, 255, 255, 0.1)';
+				nameInput.style.boxShadow = 'none';
+			});
+		}
+
+		// Styliser la section d'aide
+		if (helpSection) {
+			Object.assign(helpSection.style, {
+				background: 'rgba(20, 25, 40, 0.7)',
+				borderRadius: '8px',
+				padding: '15px',
+				margin: '15px 0',
+				maxHeight: '300px',
+				overflowY: 'auto',
+				scrollbarWidth: 'thin',
+				scrollbarColor: '#4287f5 rgba(25, 25, 35, 0.5)'
+			});
+
+			// Styliser les titres de la section d'aide
+			const helpTitles = helpSection.querySelectorAll('h1');
+			helpTitles.forEach(title => {
+				if (title instanceof HTMLElement) {
+					Object.assign(title.style, {
+						color: '#4287f5',
+						fontSize: '18px',
+						marginTop: '15px',
+						marginBottom: '8px'
+					});
+				}
+			});
+
+			// Styliser les paragraphes
+			const helpParagraphs = helpSection.querySelectorAll('p');
+			helpParagraphs.forEach(p => {
+				if (p instanceof HTMLElement) {
+					p.style.color = 'rgba(255, 255, 255, 0.8)';
+					p.style.fontSize = '14px';
+					p.style.marginBottom = '8px';
+				}
+			});
+
+			// Styliser les termes d'action et contrôles
+			const actionTerms = helpSection.querySelectorAll('.help-action');
+			actionTerms.forEach(term => {
+				if (term instanceof HTMLElement) {
+					term.style.color = '#ffc107'; // Jaune
+					term.style.fontWeight = 'bold';
+				}
+			});
+
+			const controlTerms = helpSection.querySelectorAll('.help-control');
+			controlTerms.forEach(term => {
+				if (term instanceof HTMLElement) {
+					term.style.color = '#4287f5'; // Bleu
+					term.style.fontWeight = 'bold';
+				}
+			});
+		}
+
+		// Appliquer un style spécifique aux boutons doubles
+		const btnsDoubleRow = document.querySelector('.btns-double-row');
+		if (btnsDoubleRow instanceof HTMLElement) {
+			btnsDoubleRow.style.display = 'flex';
+			btnsDoubleRow.style.gap = '10px';
+			btnsDoubleRow.style.marginTop = '10px';
+		}
+	}
+
 	MainMenuCleaning() {
 		// Déconnecter l'observateur précédent s'il existe
 		if (this.adBlockObserver) {
@@ -982,6 +1143,9 @@ export default class KxsClient {
 			{ element: socialLeft, id: 'social-share-block-wrapper' },
 			{ element: leftCollun, id: 'left-column' }
 		];
+
+		// Appliquer le style personnalisé au menu principal
+		this.applyCustomMainMenuStyle();
 
 		if (this.isMainMenuCleaned) {
 			// Mode clean: masquer les éléments
