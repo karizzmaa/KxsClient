@@ -909,8 +909,12 @@ class KxsClientHUD {
 		counters.forEach(name => {
 			const counter = document.getElementById(`${name}Counter`);
 			if (counter) {
+				// Mise à jour des propriétés de draggabilité
 				counter.style.pointerEvents = isMenuOpen ? 'auto' : 'none';
 				counter.style.cursor = isMenuOpen ? 'move' : 'default';
+
+				// Mise à jour de la possibilité de redimensionnement
+				counter.style.resize = isMenuOpen ? 'both' : 'none';
 			}
 		});
 	}
