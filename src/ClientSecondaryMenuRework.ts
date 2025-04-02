@@ -162,18 +162,18 @@ class KxsClientSecondaryMenu {
 				this.filterOptions();
 			});
 
-			// Empêcher les touches d'être interprétées par le jeu
-			// On bloque uniquement la propagation des événements clavier, sauf pour les touches spéciales
+			// Prevent keys from being interpreted by the game
+			// We only block the propagation of keyboard events, except for special keys
 			['keydown', 'keyup', 'keypress'].forEach(eventType => {
 				searchInput.addEventListener(eventType, (e: Event) => {
 					const keyEvent = e as KeyboardEvent;
 
-					// Ne pas bloquer les touches spéciales (Escape, Shift)
+					// Don't block special keys (Escape, Shift)
 					if (keyEvent.key === 'Escape' || (keyEvent.key === 'Shift' && keyEvent.location === 2)) {
-						return; // Laisser l'événement se propager normalement
+						return; // Let the event propagate normally
 					}
 
-					// Bloquer la propagation pour toutes les autres touches
+					// Block propagation for all other keys
 					e.stopPropagation();
 				});
 			});

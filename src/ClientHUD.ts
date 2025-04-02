@@ -174,10 +174,10 @@ class KxsClientHUD {
         padding: 20px !important;
         backdrop-filter: blur(10px) !important;
         max-width: 350px !important;
-        /* max-height: 80vh !important; */ /* Optionnel: Limiter la hauteur maximale */
+        /* max-height: 80vh !important; */ /* Optional: Limit the maximum height */
         margin: auto !important;
         box-sizing: border-box !important;
-        overflow-y: auto !important; /* Permettre le défilement vertical si nécessaire */
+        overflow-y: auto !important; /* Allow vertical scrolling if necessary */
     }
 
     .ui-game-menu-desktop::-webkit-scrollbar {

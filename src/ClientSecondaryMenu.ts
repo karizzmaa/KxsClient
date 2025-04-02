@@ -11,7 +11,7 @@ interface MenuOption {
 interface MenuSection {
 	title: string;
 	options: MenuOption[];
-	element?: HTMLDivElement; // Ajout d'une référence à l'élément DOM
+	element?: HTMLDivElement; // Added a reference to the DOM element
 }
 
 class KxsLegacyClientSecondaryMenu {

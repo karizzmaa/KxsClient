@@ -406,7 +406,7 @@ export default class KxsClient {
 		let isResizing = false;
 		let startX: number, startY: number, startWidth: number, startHeight: number;
 
-		// Ajouter une zone de redimensionnement en bas à droite
+		// Add a resize area in the bottom right
 		const resizer = document.createElement("div");
 		Object.assign(resizer.style, {
 			width: "10px",
@@ -836,7 +836,7 @@ export default class KxsClient {
 		if (savedPlaylist) {
 			iframe.src = `https://open.spotify.com/embed/playlist/${savedPlaylist}`;
 
-			// Simuler une pochette d'album basée sur l'ID de la playlist
+			// Simulate an album cover based on the playlist ID
 			albumArt.style.backgroundImage = `url('https://i.scdn.co/image/ab67706f00000002${savedPlaylist.substring(0, 16)}')`;
 		}
 
@@ -973,7 +973,7 @@ export default class KxsClient {
 		const helpSection = document.getElementById('start-help');
 
 		if (startMenu) {
-			// Appliquer des styles au conteneur principal
+			// Apply styles to the main container
 			Object.assign(startMenu.style, {
 				background: 'linear-gradient(135deg, rgba(25, 25, 35, 0.95) 0%, rgba(15, 15, 25, 0.98) 100%)',
 				border: '1px solid rgba(255, 255, 255, 0.1)',
@@ -985,7 +985,7 @@ export default class KxsClient {
 			});
 		}
 
-		// Styliser les boutons
+		// Style the buttons
 		playButtons.forEach(button => {
 			if (button instanceof HTMLElement) {
 				if (button.classList.contains('btn-green')) {
@@ -1010,7 +1010,7 @@ export default class KxsClient {
 					});
 				}
 
-				// Effet de survol pour tous les boutons
+				// Hover effect for all buttons
 				button.addEventListener('mouseover', () => {
 					button.style.transform = 'translateY(-2px)';
 					button.style.boxShadow = '0 6px 16px rgba(0, 0, 0, 0.3)';
@@ -1074,7 +1074,7 @@ export default class KxsClient {
 				scrollbarColor: '#4287f5 rgba(25, 25, 35, 0.5)'
 			});
 
-			// Styliser les titres de la section d'aide
+			// Style the help section titles
 			const helpTitles = helpSection.querySelectorAll('h1');
 			helpTitles.forEach(title => {
 				if (title instanceof HTMLElement) {
@@ -1087,7 +1087,7 @@ export default class KxsClient {
 				}
 			});
 
-			// Styliser les paragraphes
+			// Style the paragraphs
 			const helpParagraphs = helpSection.querySelectorAll('p');
 			helpParagraphs.forEach(p => {
 				if (p instanceof HTMLElement) {
@@ -1097,11 +1097,11 @@ export default class KxsClient {
 				}
 			});
 
-			// Styliser les termes d'action et contrôles
+			// Style the action terms and controls
 			const actionTerms = helpSection.querySelectorAll('.help-action');
 			actionTerms.forEach(term => {
 				if (term instanceof HTMLElement) {
-					term.style.color = '#ffc107'; // Jaune
+					term.style.color = '#ffc107'; // Yellow
 					term.style.fontWeight = 'bold';
 				}
 			});
@@ -1115,7 +1115,7 @@ export default class KxsClient {
 			});
 		}
 
-		// Appliquer un style spécifique aux boutons doubles
+		// Apply specific style to double buttons
 		const btnsDoubleRow = document.querySelector('.btns-double-row');
 		if (btnsDoubleRow instanceof HTMLElement) {
 			btnsDoubleRow.style.display = 'flex';
@@ -1131,7 +1131,7 @@ export default class KxsClient {
 			this.adBlockObserver = null;
 		}
 
-		// Sélectionne les éléments à masquer/afficher
+		// Select elements to hide/show
 		const newsWrapper = document.getElementById('news-wrapper');
 		const adBlockLeft = document.getElementById('ad-block-left');
 		const socialLeft = document.getElementById('social-share-block-wrapper');
@@ -1148,12 +1148,12 @@ export default class KxsClient {
 		this.applyCustomMainMenuStyle();
 
 		if (this.isMainMenuCleaned) {
-			// Mode clean: masquer les éléments
+			// Clean mode: hide elements
 			elementsToMonitor.forEach(item => {
 				if (item.element) item.element.style.display = 'none';
 			});
 
-			// Créer un observateur pour empêcher que le site ne réaffiche les éléments
+			// Create an observer to prevent the site from redisplaying elements
 			this.adBlockObserver = new MutationObserver((mutations) => {
 				let needsUpdate = false;
 
@@ -1161,7 +1161,7 @@ export default class KxsClient {
 					if (mutation.type === 'attributes' && mutation.attributeName === 'style') {
 						const target = mutation.target as HTMLElement;
 
-						// Vérifier si l'élément est un de ceux que nous surveillons
+						// Check if the element is one of those we are monitoring
 						if (elementsToMonitor.some(item => item.id === target.id && target.style.display !== 'none')) {
 							target.style.display = 'none';
 							needsUpdate = true;
@@ -1169,13 +1169,13 @@ export default class KxsClient {
 					}
 				});
 
-				// Si le site essaie de réafficher un élément publicitaire, on l'empêche
+				// If the site tries to redisplay an advertising element, we prevent it
 				if (needsUpdate) {
-					console.log('[KxsClient] Détection de tentative de réaffichage de publicités - Masquage forcé');
+					console.log('[KxsClient] Detection of attempt to redisplay ads - Forced hiding');
 				}
 			});
 
-			// Observer les changements de style sur les éléments
+			// Observe style changes on elements
 			elementsToMonitor.forEach(item => {
 				if (item.element && this.adBlockObserver) {
 					this.adBlockObserver.observe(item.element, {
@@ -1200,7 +1200,7 @@ export default class KxsClient {
 				}, 100);
 			});
 
-			// Observer les changements dans le DOM
+			// Observe changes in the DOM
 			bodyObserver.observe(document.body, { childList: true, subtree: true });
 
 		} else {

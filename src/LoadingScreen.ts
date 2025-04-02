@@ -1,8 +1,8 @@
 /**
  * LoadingScreen.ts
  * 
- * Ce module fournit une animation de chargement avec un logo et un cercle de chargement rotatif
- * qui s'affiche pendant le chargement des ressources du jeu.
+ * This module provides a loading animation with a logo and a rotating loading circle
+ * that displays during the loading of game resources.
  */
 
 export class LoadingScreen {
