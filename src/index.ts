@@ -11,7 +11,8 @@ const packageInfo = require('../package.json');
 const config: Config = require('../config.json');
 
 export const background_song = config.base_url + "/assets/Stranger_Things_Theme_Song_C418_REMIX.mp3";
-export const kxs_logo = config.base_url + "/assets/KysClient.gif";
+export const kxs_logo = config.base_url + "/assets/KysClientLogo.png";
+export const full_logo = config.base_url + "/assets/KysClient.gif";
 export const background_image = config.base_url + "/assets/background.jpg";
 const loadingScreen = new LoadingScreen(kxs_logo);
 loadingScreen.show();
@@ -27,11 +28,11 @@ document.head.appendChild(favicon);
 document.title = "KxsClient";
 
 intercept("audio/ambient/menu_music_01.mp3", background_song);
-intercept('img/survev_logo_full.png', kxs_logo);
+intercept('img/survev_logo_full.png', full_logo);
 
 const uiStatsLogo = document.querySelector('#ui-stats-logo') as HTMLElement | null;
 if (uiStatsLogo) {
-	uiStatsLogo.style.backgroundImage = `url('${kxs_logo}')`;
+	uiStatsLogo.style.backgroundImage = `url('${full_logo}')`;
 }
 const newChangelogUrl = config.base_url;
 const startBottomMiddle = document.getElementById("start-bottom-middle");
