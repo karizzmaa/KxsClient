@@ -11,7 +11,7 @@ const packageInfo = require('../package.json');
 const config: Config = require('../config.json');
 
 export const background_song = config.base_url + "/assets/Stranger_Things_Theme_Song_C418_REMIX.mp3";
-export const kxs_logo = config.base_url + "/assets/KysClientLogo.png";
+export const kxs_logo = config.base_url + "/assets/KysClient.gif";
 export const background_image = config.base_url + "/assets/background.jpg";
 const loadingScreen = new LoadingScreen(kxs_logo);
 loadingScreen.show();
