@@ -2,7 +2,7 @@
 	"base_url": "https://kxs.rip",
 	"fileName": "KxsClient.user.js",
 	"match": [
-		"://survev.io/*",
+		"://survev.io/",
 		"*://66.179.254.36/",
 		"://zurviv.io/",
 		"://expandedwater.online/",

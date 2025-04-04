@@ -5,7 +5,8 @@
 		"strict": true,
 		"esModuleInterop": true,
 		"moduleResolution": "Node",
-		"resolveJsonModule": true
+		"resolveJsonModule": true,
+		"noEmit": true
 	},
 	"include": [
 		"src/**/*"
