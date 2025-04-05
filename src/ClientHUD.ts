@@ -179,6 +179,24 @@ class KxsClientHUD {
         box-sizing: border-box !important;
         overflow-y: auto !important; /* Allow vertical scrolling if necessary */
     }
+    
+    /* Style pour les boutons de mode de jeu qui ont une image de fond */
+    .btn-mode-cobalt,
+    [style*="background: url("] {
+        background-repeat: no-repeat !important;
+        background-position: right center !important;
+        background-size: auto 80% !important;
+        position: relative !important;
+        padding-right: 40px !important;
+    }
+    
+    /* Ne pas appliquer ce style aux boutons standards comme Play Solo */
+    #btn-start-mode-0 {
+        background-repeat: initial !important;
+        background-position: initial !important;
+        background-size: initial !important;
+        padding-right: initial !important;
+    }
 
     .ui-game-menu-desktop::-webkit-scrollbar {
         width: 8px !important;
