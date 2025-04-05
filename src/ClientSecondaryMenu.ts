@@ -233,7 +233,6 @@ class KxsLegacyClientSecondaryMenu {
 			value: this.kxsClient.isFpsUncapped,
 			type: "toggle",
 			onChange: () => {
-				this.kxsClient.isFpsUncapped = !this.kxsClient.isFpsUncapped;
 				this.kxsClient.toggleFpsUncap();
 				this.kxsClient.updateLocalStorage();
 			},

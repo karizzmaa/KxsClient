@@ -56,7 +56,7 @@ export default class KxsClient {
 		this.config = require("../config.json");
 		this.menu = document.createElement("div");
 		this.lastFrameTime = performance.now();
-		this.isFpsUncapped = this.getFpsUncappedFromLocalStorage();
+		this.isFpsUncapped = false;
 		this.isFpsVisible = true;
 		this.isPingVisible = true;
 		this.isKillsVisible = true;
@@ -546,15 +546,6 @@ export default class KxsClient {
 			return configObject.region;
 		}
 		return null;
-	}
-
-	getFpsUncappedFromLocalStorage() {
-		const savedConfig = localStorage.getItem("userSettings");
-		if (savedConfig) {
-			const configObject = JSON.parse(savedConfig);
-			return configObject.isFpsUncapped || false;
-		}
-		return false;
 	}
 
 	saveFpsUncappedToLocalStorage() {

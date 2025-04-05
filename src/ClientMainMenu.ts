@@ -93,8 +93,8 @@ class KxsMainClientMenu {
 			text: `Uncap FPS`,
 			initialState: this.kxsClient.isFpsUncapped,
 			onClick: () => {
-				this.kxsClient.updateLocalStorage();
 				this.kxsClient.toggleFpsUncap();
+				this.kxsClient.updateLocalStorage();
 			},
 		});
 
