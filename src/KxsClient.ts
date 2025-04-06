@@ -80,6 +80,7 @@ export default class KxsClient {
 			fps: { left: 20, top: 160 },
 			ping: { left: 20, top: 220 },
 			kills: { left: 20, top: 280 },
+			lowHpWarning: { left: 285, top: 742 },
 		};
 		this.defaultSizes = {
 			fps: { width: 100, height: 30 },

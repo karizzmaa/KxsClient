@@ -6,7 +6,7 @@ class HealthWarning {
 	private isDraggable: boolean = false;
 	private isDragging: boolean = false;
 	private dragOffset: { x: number, y: number } = { x: 0, y: 0 };
-	private position: { x: number, y: number } = { x: 285, y: 742 };
+	private readonly POSITION_KEY = 'lowHpWarning';
 	private menuCheckInterval: number | null = null;
 
 	constructor(kxsClient: KxsClient) {
@@ -71,9 +71,32 @@ class HealthWarning {
 	private setFixedPosition() {
 		if (!this.warningElement) return;
 
-		// Set position based on saved values
-		this.warningElement.style.top = `${this.position.y}px`;
-		this.warningElement.style.left = `${this.position.x}px`;
+		// Récupérer la position depuis le localStorage ou les valeurs par défaut
+		const storageKey = `position_${this.POSITION_KEY}`;
+		const savedPosition = localStorage.getItem(storageKey);
+		let position;
+
+		if (savedPosition) {
+			try {
+				// Utiliser la position sauvegardée
+				const { x, y } = JSON.parse(savedPosition);
+				position = { left: x, top: y };
+				console.log('Position LOW HP chargée:', position);
+			} catch (error) {
+				// En cas d'erreur, utiliser la position par défaut
+				position = this.kxsClient.defaultPositions[this.POSITION_KEY];
+				console.error('Erreur lors du chargement de la position LOW HP:', error);
+			}
+		} else {
+			// Utiliser la position par défaut
+			position = this.kxsClient.defaultPositions[this.POSITION_KEY];
+		}
+
+		// Appliquer la position
+		if (position) {
+			this.warningElement.style.top = `${position.top}px`;
+			this.warningElement.style.left = `${position.left}px`;
+		}
 	}
 	private addPulseAnimation() {
 		const keyframes = `
@@ -212,13 +235,24 @@ class HealthWarning {
 		// Update element position
 		this.warningElement.style.left = `${newX}px`;
 		this.warningElement.style.top = `${newY}px`;
-
-		// Store position
-		this.position = { x: newX, y: newY };
 	}
 
 	private handleMouseUp() {
-		this.isDragging = false;
+		if (this.isDragging && this.warningElement) {
+			this.isDragging = false;
+			
+			// Récupérer les positions actuelles
+			const left = parseInt(this.warningElement.style.left);
+			const top = parseInt(this.warningElement.style.top);
+			
+			// Sauvegarder la position
+			const storageKey = `position_${this.POSITION_KEY}`;
+			localStorage.setItem(
+				storageKey, 
+				JSON.stringify({ x: left, y: top })
+			);
+			console.log('Position LOW HP sauvegardée:', { x: left, y: top });
+		}
 	}
 
 	private startMenuCheckInterval() {
