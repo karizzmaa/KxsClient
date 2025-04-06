@@ -21,6 +21,8 @@ class KxsLegacyClientSecondaryMenu {
 	private sections: MenuSection[];
 	menu: HTMLDivElement;
 	kxsClient: KxsClient;
+	// Propriété publique pour exposer l'état d'ouverture du menu
+	public isOpen: boolean;
 
 	private boundShiftListener: (event: KeyboardEvent) => void;
 	private boundMouseDownListener: (event: MouseEvent) => void;
@@ -34,6 +36,7 @@ class KxsLegacyClientSecondaryMenu {
 		this.dragOffset = { x: 0, y: 0 };
 		this.sections = [];
 		this.menu = document.createElement("div");
+		this.isOpen = false;
 
 		this.boundShiftListener = this.handleShiftPress.bind(this);
 		this.boundMouseDownListener = this.handleMouseDown.bind(this);
@@ -530,6 +533,8 @@ class KxsLegacyClientSecondaryMenu {
 
 	toggleMenuVisibility() {
 		this.isClientMenuVisible = !this.isClientMenuVisible;
+		// Mettre à jour la propriété publique en même temps
+		this.isOpen = this.isClientMenuVisible;
 		if (this.kxsClient.isNotifyingForToggleMenu) {
 			this.kxsClient.nm.showNotification(this.isClientMenuVisible ? "Opening menu..." : "Closing menu...", "info", 1400);
 		}

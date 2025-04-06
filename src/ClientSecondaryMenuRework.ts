@@ -28,6 +28,8 @@ class KxsClientSecondaryMenu {
 	private searchTerm: string = '';
 	menu: HTMLDivElement;
 	kxsClient: KxsClient;
+	// Propriété publique pour exposer l'état d'ouverture du menu
+	public isOpen: boolean;
 
 	constructor(kxsClient: KxsClient) {
 		this.kxsClient = kxsClient;
@@ -37,6 +39,7 @@ class KxsClientSecondaryMenu {
 		this.sections = [];
 		this.allOptions = [];
 		this.activeCategory = "ALL";
+		this.isOpen = false;
 		this.menu = document.createElement("div");
 		this.initMenu();
 		this.addShiftListener();
@@ -785,6 +788,8 @@ class KxsClientSecondaryMenu {
 
 	toggleMenuVisibility() {
 		this.isClientMenuVisible = !this.isClientMenuVisible;
+		// Mettre à jour la propriété publique en même temps
+		this.isOpen = this.isClientMenuVisible;
 
 		if (this.kxsClient.isNotifyingForToggleMenu) {
 			this.kxsClient.nm.showNotification(this.isClientMenuVisible ? "Opening menu..." : "Closing menu...", "info", 1400);
