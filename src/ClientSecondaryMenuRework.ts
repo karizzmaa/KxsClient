@@ -181,11 +181,24 @@ class KxsClientSecondaryMenu {
 				});
 			});
 
-			// Assurer que le champ garde le focus
-			searchInput.addEventListener('blur', () => {
-				// Retarder légèrement pour permettre d'autres interactions
+			// Éviter que la barre de recherche ne reprenne automatiquement le focus
+			// lorsque l'utilisateur interagit avec un autre champ de texte
+			searchInput.addEventListener('blur', (e) => {
+				// Ne pas reprendre le focus si l'utilisateur clique sur un autre input
+				const newFocusElement = e.relatedTarget as HTMLElement | null;
+				if (newFocusElement && (newFocusElement.tagName === 'INPUT' || newFocusElement.tagName === 'TEXTAREA')) {
+					// L'utilisateur a cliqué sur un autre champ de texte, ne pas reprendre le focus
+					return;
+				}
+
+				// Pour les autres cas, seulement si aucun autre élément n'a le focus
 				setTimeout(() => {
-					if (this.isClientMenuVisible) {
+					const activeElement = document.activeElement as HTMLElement | null;
+					if (this.isClientMenuVisible &&
+						activeElement &&
+						activeElement !== searchInput &&
+						activeElement.tagName !== 'INPUT' &&
+						activeElement.tagName !== 'TEXTAREA') {
 						searchInput.focus();
 					}
 				}, 100);
