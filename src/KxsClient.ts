@@ -29,6 +29,7 @@ export default class KxsClient {
 	isKillFeedBlint: boolean;
 	isSpotifyPlayerEnabled: boolean;
 	isMainMenuCleaned: boolean;
+	isNotifyingForToggleMenu: boolean;
 	all_friends: string;
 
 	currentServer: string | null | undefined;
@@ -73,6 +74,7 @@ export default class KxsClient {
 		this.counters = {};
 		this.all_friends = '';
 		this.isMainMenuCleaned = false;
+		this.isNotifyingForToggleMenu = true;
 
 		this.defaultPositions = {
 			fps: { left: 20, top: 160 },
@@ -160,7 +162,8 @@ export default class KxsClient {
 				isKillFeedBlint: this.isKillFeedBlint,
 				all_friends: this.all_friends,
 				isSpotifyPlayerEnabled: this.isSpotifyPlayerEnabled,
-				isMainMenuCleaned: this.isMainMenuCleaned
+				isMainMenuCleaned: this.isMainMenuCleaned,
+				isNotifyingForToggleMenu: this.isNotifyingForToggleMenu
 			}),
 		);
 	};
@@ -606,6 +609,7 @@ export default class KxsClient {
 			this.all_friends = savedSettings.all_friends ?? this.all_friends;
 			this.isSpotifyPlayerEnabled = savedSettings.isSpotifyPlayerEnabled ?? this.isSpotifyPlayerEnabled;
 			this.isMainMenuCleaned = savedSettings.isMainMenuCleaned ?? this.isMainMenuCleaned;
+			this.isNotifyingForToggleMenu = savedSettings.isNotifyingForToggleMenu ?? this.isNotifyingForToggleMenu;
 		}
 
 		this.updateKillsVisibility();

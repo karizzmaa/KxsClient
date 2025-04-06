@@ -118,6 +118,17 @@ class KxsLegacyClientSecondaryMenu {
 			},
 		});
 
+
+		this.addOption(HUD, {
+			label: "Message Open/Close RSHIFT Menu",
+			value: this.kxsClient.isNotifyingForToggleMenu,
+			type: "toggle",
+			onChange: (value) => {
+				this.kxsClient.isNotifyingForToggleMenu = !this.kxsClient.isNotifyingForToggleMenu
+				this.kxsClient.updateLocalStorage()
+			},
+		})
+
 		this.addOption(HUD, {
 			label: "Show Ping",
 			value: this.kxsClient.isPingVisible,
@@ -519,7 +530,9 @@ class KxsLegacyClientSecondaryMenu {
 
 	toggleMenuVisibility() {
 		this.isClientMenuVisible = !this.isClientMenuVisible;
-		this.kxsClient.nm.showNotification(this.isClientMenuVisible ? "Opening menu..." : "Closing menu...", "info", 1400);
+		if (this.kxsClient.isNotifyingForToggleMenu) {
+			this.kxsClient.nm.showNotification(this.isClientMenuVisible ? "Opening menu..." : "Closing menu...", "info", 1400);
+		}
 		this.menu.style.display = this.isClientMenuVisible ? "block" : "none";
 	}
 
