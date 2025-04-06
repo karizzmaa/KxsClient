@@ -263,6 +263,7 @@ class KxsClientHUD {
         text-align: center !important;
         display: block !important;
         box-sizing: border-box !important;
+		line-height: 15px !important;
     }
 
     .btn-game-menu:hover {
