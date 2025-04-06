@@ -7,7 +7,7 @@ interface MenuOption {
 	value: string | boolean | number;
 	type: "toggle" | "input" | "click";
 	onChange?: (value: string | boolean) => void;
-	category: "HUD" | "SERVER" | "MECHANIC" | "ALL";
+	category: "HUD" | "SERVER" | "MECHANIC" | "ALL" | "SOUND";
 	icon: string;
 }
 
@@ -15,7 +15,7 @@ interface MenuSection {
 	title: string;
 	options: MenuOption[];
 	element?: HTMLDivElement;
-	category: "HUD" | "SERVER" | "MECHANIC" | "ALL";
+	category: "HUD" | "SERVER" | "MECHANIC" | "ALL" | "SOUND";
 }
 
 class KxsClientSecondaryMenu {
@@ -100,7 +100,7 @@ class KxsClientSecondaryMenu {
           </div>
           <div style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 15px; width: 100%; box-sizing: border-box;">
             <div style="display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 5px;">
-              ${["ALL", "HUD", "SERVER", "MECHANIC"].map(cat => `
+              ${["ALL", "HUD", "SERVER", "MECHANIC", "SOUND"].map(cat => `
                 <button class="category-btn" data-category="${cat}" style="
                   padding: 6px 16px;
                   background: ${this.activeCategory === cat ? '#3B82F6' : 'rgba(55, 65, 81, 0.8)'};
@@ -216,6 +216,31 @@ class KxsClientSecondaryMenu {
 		let HUD = this.addSection("HUD", 'HUD');
 		let MECHANIC = this.addSection("MECHANIC", 'MECHANIC');
 		let SERVER = this.addSection("SERVER", 'SERVER');
+		let SOUND = this.addSection("SOUND", 'SOUND');
+
+		this.addOption(SOUND, {
+			label: "Win sound",
+			value: this.kxsClient.soundLibrary.win_sound_url,
+			category: "SOUND",
+			icon: '<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><g id="SVGRepo_bgCarrier" stroke-width="0"></g><g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g><g id="SVGRepo_iconCarrier"> <path d="M3 11V13M6 10V14M9 11V13M12 9V15M15 6V18M18 10V14M21 11V13" stroke="#000000" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path> </g></svg>',
+			type: "input",
+			onChange: (value) => {
+				this.kxsClient.soundLibrary.win_sound_url = value as string;
+				this.kxsClient.updateLocalStorage();
+			}
+		});
+
+		this.addOption(SOUND, {
+			label: "Death sound",
+			value: this.kxsClient.soundLibrary.death_sound_url,
+			category: "SOUND",
+			icon: '<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><g id="SVGRepo_bgCarrier" stroke-width="0"></g><g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g><g id="SVGRepo_iconCarrier"> <path d="M3 11V13M6 10V14M9 11V13M12 9V15M15 12V18M15 6V8M18 10V14M21 11V13" stroke="#000000" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path> </g></svg>',
+			type: "input",
+			onChange: (value) => {
+				this.kxsClient.soundLibrary.death_sound_url = value as string;
+				this.kxsClient.updateLocalStorage();
+			}
+		});
 
 		this.addOption(HUD, {
 			label: "Clean Main Menu",
@@ -626,7 +651,7 @@ class KxsClientSecondaryMenu {
 		this.allOptions.push(option);
 	}
 
-	public addSection(title: string, category: "HUD" | "SERVER" | "MECHANIC" | "ALL" = "ALL"): MenuSection {
+	public addSection(title: string, category: "HUD" | "SERVER" | "MECHANIC" | "ALL" | "SOUND" = "ALL"): MenuSection {
 		const section: MenuSection = {
 			title,
 			options: [],

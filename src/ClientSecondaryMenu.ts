@@ -98,6 +98,28 @@ class KxsLegacyClientSecondaryMenu {
 	private loadOption(): void {
 		let HUD = this.addSection("HUD");
 
+		let SOUND = this.addSection("SOUND");
+
+		this.addOption(SOUND, {
+			label: "Win sound",
+			value: this.kxsClient.soundLibrary.win_sound_url,
+			type: "input",
+			onChange: (value) => {
+				this.kxsClient.soundLibrary.win_sound_url = value as string;
+				this.kxsClient.updateLocalStorage();
+			}
+		});
+
+		this.addOption(SOUND, {
+			label: "Death sound",
+			value: this.kxsClient.soundLibrary.death_sound_url,
+			type: "input",
+			onChange: (value) => {
+				this.kxsClient.soundLibrary.death_sound_url = value as string;
+				this.kxsClient.updateLocalStorage();
+			}
+		});
+
 		this.addOption(HUD, {
 			label: "Use Legacy Menu",
 			value: this.kxsClient.isLegaySecondaryMenu,

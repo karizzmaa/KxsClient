@@ -10,6 +10,8 @@ import { DiscordWebSocket } from "./DiscordRichPresence";
 import { NotificationManager } from "./NotificationManager";
 import { KxsClientSecondaryMenu } from "./ClientSecondaryMenuRework";
 import { KxsLegacyClientSecondaryMenu } from "./ClientSecondaryMenu";
+import { SoundLibrary } from "./types/SoundLibrary";
+import { background_song, death_sound, full_logo, win_sound } from ".";
 
 export default class KxsClient {
 	lastFrameTime: DOMHighResTimeStamp;
@@ -47,6 +49,7 @@ export default class KxsClient {
 	secondaryMenu: KxsClientSecondaryMenu | KxsLegacyClientSecondaryMenu;
 	nm: NotificationManager;
 	private deathObserver: MutationObserver | null = null;
+	soundLibrary: SoundLibrary;
 
 	protected menu: HTMLElement;
 	animationFrameCallback:
@@ -88,6 +91,11 @@ export default class KxsClient {
 			kills: { width: 100, height: 30 },
 		};
 
+		this.soundLibrary = {
+			win_sound_url: win_sound,
+			death_sound_url: death_sound,
+			background_sound_url: background_song,
+		};
 
 		// Before all, load local storage
 		this.loadLocalStorage();
@@ -139,7 +147,7 @@ export default class KxsClient {
 
 		if (startRowHeader) {
 			(startRowHeader as HTMLElement).style.backgroundImage =
-				`url("${this.config.base_url}/assets/KysClient.gif")`;
+				`url("${full_logo}")`;
 		}
 	}
 
@@ -164,7 +172,8 @@ export default class KxsClient {
 				all_friends: this.all_friends,
 				isSpotifyPlayerEnabled: this.isSpotifyPlayerEnabled,
 				isMainMenuCleaned: this.isMainMenuCleaned,
-				isNotifyingForToggleMenu: this.isNotifyingForToggleMenu
+				isNotifyingForToggleMenu: this.isNotifyingForToggleMenu,
+				soundLibrary: this.soundLibrary
 			}),
 		);
 	};
@@ -217,7 +226,7 @@ export default class KxsClient {
 		try {
 			if (this.isDeathSoundEnabled) {
 				const audio = new Audio(
-					this.config.base_url + "/assets/dead.m4a",
+					this.soundLibrary.death_sound_url,
 				);
 				audio.volume = 0.3;
 				audio.play().catch((err) => false);
@@ -341,7 +350,7 @@ export default class KxsClient {
 
 		if (this.isWinSoundEnabled) {
 			const audio = new Audio(
-				this.config.base_url + "/assets/win.m4a",
+				this.soundLibrary.win_sound_url,
 			);
 			audio.play().catch((err) => console.error("Erreur lecture:", err));
 		}
@@ -611,6 +620,18 @@ export default class KxsClient {
 			this.isSpotifyPlayerEnabled = savedSettings.isSpotifyPlayerEnabled ?? this.isSpotifyPlayerEnabled;
 			this.isMainMenuCleaned = savedSettings.isMainMenuCleaned ?? this.isMainMenuCleaned;
 			this.isNotifyingForToggleMenu = savedSettings.isNotifyingForToggleMenu ?? this.isNotifyingForToggleMenu;
+			if (savedSettings.soundLibrary) {
+				// Check if the sound value exists
+				if (savedSettings.soundLibrary.win_sound_url) {
+					this.soundLibrary.win_sound_url = savedSettings.soundLibrary.win_sound_url;
+				}
+				if (savedSettings.soundLibrary.death_sound_url) {
+					this.soundLibrary.death_sound_url = savedSettings.soundLibrary.death_sound_url;
+				}
+				if (savedSettings.soundLibrary.background_sound_url) {
+					this.soundLibrary.background_sound_url = savedSettings.soundLibrary.background_sound_url;
+				}
+			}
 		}
 
 		this.updateKillsVisibility();
