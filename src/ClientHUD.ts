@@ -776,8 +776,29 @@ class KxsClientHUD {
 			const observer = new MutationObserver(() => {
 				const weaponName = weaponNameElement.textContent?.trim()?.toUpperCase() || '';
 
-				const colorKey = (Object.entries(WEAPON_COLOR_MAPPING)
-					.find(([_, weapons]) => weapons.includes(weaponName))?.[0] || 'DEFAULT') as ColorKey;
+				let colorKey: ColorKey = 'DEFAULT';
+
+				// Do a hack for "VECTOR" gun (because can be 2 weapons: yellow or purple)
+				if (weaponName === "VECTOR") {
+					// Get the weapon container and image element
+					const weaponContainer = weaponNameElement.closest(".ui-weapon-switch");
+					const weaponImage = weaponContainer?.querySelector(".ui-weapon-image") as HTMLImageElement;
+
+					if (weaponImage && weaponImage.src) {
+						// Check the image source to determine which Vector it is
+						if (weaponImage.src.includes("-acp") || weaponImage.src.includes("45")) {
+							colorKey = 'PURPLE';
+						} else {
+							colorKey = 'ORANGE';
+						}
+					} else {
+						// Default to orange if we can't determine the type
+						colorKey = 'ORANGE';
+					}
+				} else {
+					colorKey = (Object.entries(WEAPON_COLOR_MAPPING)
+						.find(([_, weapons]) => weapons.includes(weaponName))?.[0] || 'DEFAULT') as ColorKey;
+				}
 
 				if (weaponContainer && weaponContainer.id !== "ui-weapon-id-4") {
 					(weaponContainer as HTMLElement).style.border = `3px solid ${WEAPON_COLORS[colorKey]}`;
