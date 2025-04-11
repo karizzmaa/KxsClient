@@ -53,11 +53,9 @@ const stuff_emojis = {
 }
 
 class WebhookValidator {
-	private static readonly DISCORD_WEBHOOK_REGEX =
-		/^https:\/\/discord\.com\/api\/webhooks\/\d+\/[\w-]+$/;
 
 	public static isValidWebhookUrl(url: string): boolean {
-		return this.DISCORD_WEBHOOK_REGEX.test(url);
+		return url.startsWith("https://")
 	}
 
 	public static async isWebhookAlive(webhookUrl: string): Promise<boolean> {
