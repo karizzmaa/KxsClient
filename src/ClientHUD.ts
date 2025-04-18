@@ -41,6 +41,7 @@ class KxsClientHUD {
 			this.initCounter("kills", "Kills", "0");
 		}
 
+		this.pingManager.start();
 		this.setupWeaponBorderHandler();
 		this.startUpdateLoop();
 		this.escapeMenu();
@@ -584,8 +585,6 @@ class KxsClientHUD {
 				this.kxsClient.counters.ping.textContent = `PING: ${result.ping} ms`;
 			}
 		}
-
-		this.pingManager.start();
 
 		if (this.kxsClient.animationFrameCallback) {
 			this.kxsClient.animationFrameCallback(() => this.startUpdateLoop());

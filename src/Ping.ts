@@ -8,11 +8,25 @@ class PingTest {
 	private isWebSocket: boolean = true;
 	private url: string = "";
 	private region: string = "";
+	private hasPing: boolean = false;
 
 	constructor() {
 		this.ptcDataBuf = new ArrayBuffer(1);
-		this.setServerFromDOM();
-		this.attachRegionChangeListener();
+		this.waitForServerSelectElements();
+	}
+
+
+	private waitForServerSelectElements() {
+		const checkInterval = setInterval(() => {
+			const teamSelect = document.getElementById("team-server-select");
+			const mainSelect = document.getElementById("server-select-main");
+
+			if (teamSelect || mainSelect) {
+				clearInterval(checkInterval);
+				this.setServerFromDOM();
+				this.attachRegionChangeListener();
+			}
+		}, 100); // Vérifie toutes les 100ms
 	}
 
 	private setServerFromDOM() {
@@ -33,6 +47,7 @@ class PingTest {
 				? teamSelectElement.value
 				: mainSelectElement?.value || "NA";
 
+		console.log("-----------------------------------------------------------", region)
 		const servers = [
 			{ region: "NA", url: "usr.mathsiscoolfun.com:8001" },
 			{ region: "EU", url: "eur.mathsiscoolfun.com:8001" },
@@ -69,7 +84,8 @@ class PingTest {
 	}
 
 	private startWebSocketPing() {
-		if (this.ws) return;
+		console.log(this.url)
+		if (this.ws || !this.url) return;
 
 		const ws = new WebSocket(this.url);
 		ws.binaryType = "arraybuffer";
@@ -82,6 +98,7 @@ class PingTest {
 		};
 
 		ws.onmessage = () => {
+			this.hasPing = true;
 			const elapsed = (Date.now() - this.sendTime) / 1e3;
 			this.ping = Math.round(elapsed * 1000);
 			setTimeout(() => this.sendPing(), 250);
@@ -119,7 +136,9 @@ class PingTest {
 		}
 		this.isConnecting = false;
 		this.retryCount = 0;
+		this.hasPing = false;
 	}
+
 
 	public restart() {
 		this.stop();
@@ -130,9 +149,10 @@ class PingTest {
 	public getPingResult() {
 		return {
 			region: this.region,
-			ping: this.ping,
+			ping: this.hasPing ? this.ping : null,
 		};
 	}
+
 }
 
 export { PingTest };
