@@ -1,5 +1,5 @@
 import KxsClient from "./KxsClient";
-import { PingManager } from "./Ping";
+import { PingTest } from "./Ping";
 
 interface HealthChangeAnimation {
 	element: HTMLElement;
@@ -17,7 +17,7 @@ class KxsClientHUD {
 	frameCount: number;
 	fps: number;
 	kills: number;
-	private pingManager: PingManager;
+	private pingManager: PingTest;
 	isMenuVisible: boolean;
 	kxsClient: KxsClient;
 	private healthAnimations: HealthChangeAnimation[] = [];
@@ -29,7 +29,7 @@ class KxsClientHUD {
 		this.fps = 0;
 		this.kills = 0;
 		this.isMenuVisible = true;
-		this.pingManager = new PingManager();
+		this.pingManager = new PingTest();
 
 		if (this.kxsClient.isPingVisible) {
 			this.initCounter("ping", "Ping", "45ms");
@@ -585,7 +585,7 @@ class KxsClientHUD {
 			}
 		}
 
-		this.pingManager.startPingTest();
+		this.pingManager.start();
 
 		if (this.kxsClient.animationFrameCallback) {
 			this.kxsClient.animationFrameCallback(() => this.startUpdateLoop());

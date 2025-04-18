@@ -1,198 +1,37 @@
 class PingTest {
 	private ptcDataBuf: ArrayBuffer;
-	test: {
-		region: string;
-		url: string;
-		ping: number;
-		ws: WebSocket | null;
-		sendTime: number;
-		retryCount: number;
-		isConnecting: boolean;
-		isWebSocket: boolean;
-	};
+	private ping: number = 0;
+	private ws: WebSocket | null = null;
+	private sendTime: number = 0;
+	private retryCount: number = 0;
+	private isConnecting: boolean = false;
+	private isWebSocket: boolean = true;
+	private url: string = "";
+	private region: string = "";
 
-	constructor(selectedServer: { region: string; url: string }) {
+	constructor() {
 		this.ptcDataBuf = new ArrayBuffer(1);
-		this.test = {
-			region: selectedServer.region,
-			url: selectedServer.url.startsWith("ws://") || selectedServer.url.startsWith("wss://")
-				? selectedServer.url
-				: `https://${selectedServer.url}`, // Store the base URL without /ping for HTTP
-			ping: 0, // Initialize to 0 instead of 9999
-			ws: null,
-			sendTime: 0,
-			retryCount: 0,
-			isConnecting: false,
-			isWebSocket: selectedServer.url.startsWith("ws://") || selectedServer.url.startsWith("wss://"),
-		};
-	}
-	//check to see if urls match
-	private getMatchingGameUrl() {
-		const gameUrls = [
-			"*://survev.io/*",
-			"*://66.179.254.36/*",
-			"*://zurviv.io/*",
-			"*://expandedwater.online/*",
-			"*://localhost:3000/*",
-			"*://surviv.wf/*",
-			"*://resurviv.biz/*",
-			"*://82.67.125.203/*",
-			"*://leia-uwu.github.io/survev/*",
-			"*://50v50.online/*",
-			"*://eu-comp.net/*",
-			"*://survev.leia-is.gay/*"
-		];
-
-		const currentDomain = window.location.hostname;
-		for (let i = 0; i < gameUrls.length; i++) {
-			const url = new URL(gameUrls[i].replace('*://', 'http://'));
-			if (currentDomain === url.hostname) {
-				return gameUrls[i];
-			}
-		}
-		console.warn("No matching game URL found for the current domain");
-		return null;
+		this.setServerFromDOM();
+		this.attachRegionChangeListener();
 	}
 
-	startPingTest() {
-		if (this.test.isConnecting) return;
-		this.test.isConnecting = true;
-
-		// We don't need to replace the URL with a matching game URL
-		// because we want to test the ping to the specific server selected
-		// The URL was already properly set in the constructor
-
-		if (this.test.isWebSocket) {
-			try {
-				const ws = new WebSocket(this.test.url);
-				ws.binaryType = "arraybuffer";
-
-				ws.onopen = () => {
-					this.test.ws = ws;
-					this.test.isConnecting = false;
-					this.test.retryCount = 0;
-					this.sendPing();
-				};
-
-				ws.onmessage = (event) => {
-					if (this.test.sendTime === 0) return;
-
-					const elapsed = Date.now() - this.test.sendTime;
-					this.test.ping = Math.min(Math.round(elapsed), 999);
-					setTimeout(() => this.sendPing(), 250);
-				};
-
-				ws.onerror = (error) => {
-					console.error("WebSocket error:", error);
-					this.handleConnectionError();
-				};
-
-				ws.onclose = () => {
-					this.test.ws = null;
-					this.test.isConnecting = false;
-					if (this.test.retryCount < 3) {
-						setTimeout(() => this.startPingTest(), 1000);
-					}
-				};
-			} catch (error) {
-				console.error("Failed to create WebSocket:", error);
-				this.handleConnectionError();
-			}
-		} else {
-			this.sendHttpPing();
-		}
+	private setServerFromDOM() {
+		const { region, url } = this.detectSelectedServer();
+		this.region = region;
+		this.url = `wss://${url}/ptc`;
 	}
 
-	private sendHttpPing() {
-		// Use image loading technique to avoid CORS issues
-		this.test.sendTime = Date.now();
-
-		// Create a new image element
-		const img = new Image();
-
-		// Set up load and error handlers
-		img.onload = () => {
-			const elapsed = Date.now() - this.test.sendTime;
-			this.test.ping = Math.min(Math.round(elapsed), 999);
-			setTimeout(() => this.sendHttpPing(), 250);
-		};
-
-		img.onerror = () => {
-			// Even if the image fails to load, we can still measure the time it took to fail
-			// This gives us an approximate ping time
-			const elapsed = Date.now() - this.test.sendTime;
-			this.test.ping = Math.min(Math.round(elapsed), 999);
-			setTimeout(() => this.sendHttpPing(), 250);
-		};
-
-		// Add a cache-busting parameter to prevent caching
-		const cacheBuster = Date.now();
-		const baseUrl = this.test.url.replace('/ping', '');
-		img.src = `${baseUrl}/favicon.ico?cb=${cacheBuster}`;
-	}
-
-	private handleConnectionError() {
-		this.test.ping = 0;
-		this.test.isConnecting = false;
-		this.test.retryCount++;
-
-		if (this.test.ws) {
-			this.test.ws.close();
-			this.test.ws = null;
-		}
-
-		if (this.test.retryCount < 3) {
-			setTimeout(() => this.startPingTest(), 1000);
-		}
-	}
-
-	sendPing() {
-		if (this.test.isWebSocket) {
-			if (!this.test.ws || this.test.ws.readyState !== WebSocket.OPEN) {
-				this.handleConnectionError();
-				return;
-			}
-
-			try {
-				this.test.sendTime = Date.now();
-				this.test.ws.send(this.ptcDataBuf);
-			} catch (error) {
-				console.error("Failed to send ping:", error);
-				this.handleConnectionError();
-			}
-		}
-	}
-
-	getPingResult() {
-		return {
-			region: this.test.region,
-			ping: this.test.ping || 0,
-		};
-	}
-}
-
-class PingManager {
-	private currentServer: string | null = null;
-	private pingTest: PingTest | null = null;
-
-	startPingTest() {
+	private detectSelectedServer(): { region: string; url: string } {
 		const currentUrl = window.location.href;
 		const isSpecialUrl = /\/#\w+/.test(currentUrl);
 
-		const teamSelectElement = document.getElementById("team-server-select");
-		const mainSelectElement = document.getElementById("server-select-main");
+		const teamSelectElement = document.getElementById("team-server-select") as HTMLSelectElement | null;
+		const mainSelectElement = document.getElementById("server-select-main") as HTMLSelectElement | null;
 
 		const region =
 			isSpecialUrl && teamSelectElement
-				? (teamSelectElement as HTMLSelectElement).value
-				: mainSelectElement
-					? (mainSelectElement as HTMLSelectElement).value
-					: null;
-
-		if (!region || region === this.currentServer) return;
-
-		this.currentServer = region;
-		this.resetPing();
+				? teamSelectElement.value
+				: mainSelectElement?.value || "NA";
 
 		const servers = [
 			{ region: "NA", url: "usr.mathsiscoolfun.com:8001" },
@@ -201,27 +40,99 @@ class PingManager {
 			{ region: "SA", url: "sa.mathsiscoolfun.com:8001" },
 		];
 
-		const selectedServer = servers.find(
-			(server) => region.toUpperCase() === server.region.toUpperCase(),
-		);
+		const selectedServer = servers.find((s) => s.region.toUpperCase() === region.toUpperCase());
 
-		if (selectedServer) {
-			this.pingTest = new PingTest(selectedServer);
-			this.pingTest.startPingTest();
+		if (!selectedServer) throw new Error("Aucun serveur correspondant trouvé");
+
+		return selectedServer;
+	}
+
+	private attachRegionChangeListener() {
+		const teamSelectElement = document.getElementById("team-server-select");
+		const mainSelectElement = document.getElementById("server-select-main");
+
+		const onChange = () => {
+			const { region } = this.detectSelectedServer();
+			if (region !== this.region) {
+				this.restart();
+			}
+		};
+
+		teamSelectElement?.addEventListener("change", onChange);
+		mainSelectElement?.addEventListener("change", onChange);
+	}
+
+	public start() {
+		if (this.isConnecting) return;
+		this.isConnecting = true;
+		this.startWebSocketPing();
+	}
+
+	private startWebSocketPing() {
+		if (this.ws) return;
+
+		const ws = new WebSocket(this.url);
+		ws.binaryType = "arraybuffer";
+
+		ws.onopen = () => {
+			this.ws = ws;
+			this.retryCount = 0;
+			this.isConnecting = false;
+			this.sendPing();
+		};
+
+		ws.onmessage = () => {
+			const elapsed = (Date.now() - this.sendTime) / 1e3;
+			this.ping = Math.round(elapsed * 1000);
+			setTimeout(() => this.sendPing(), 250);
+		};
+
+		ws.onerror = () => {
+			this.ping = 0;
+			this.retryCount++;
+			if (this.retryCount < 3) {
+				setTimeout(() => this.startWebSocketPing(), 1000);
+			} else {
+				this.ws?.close();
+				this.ws = null;
+				this.isConnecting = false;
+			}
+		};
+
+		ws.onclose = () => {
+			this.ws = null;
+			this.isConnecting = false;
+		};
+	}
+
+	private sendPing() {
+		if (this.ws && this.ws.readyState === WebSocket.OPEN) {
+			this.sendTime = Date.now();
+			this.ws.send(this.ptcDataBuf);
 		}
 	}
 
-	resetPing() {
-		if (this.pingTest?.test.ws) {
-			this.pingTest.test.ws.close();
-			this.pingTest.test.ws = null;
+	public stop() {
+		if (this.ws) {
+			this.ws.close();
+			this.ws = null;
 		}
-		this.pingTest = null;
+		this.isConnecting = false;
+		this.retryCount = 0;
 	}
 
-	getPingResult() {
-		return this.pingTest?.getPingResult() || { region: "", ping: 0 };
+	public restart() {
+		this.stop();
+		this.setServerFromDOM();
+		this.start();
+	}
+
+	public getPingResult() {
+		return {
+			region: this.region,
+			ping: this.ping,
+		};
 	}
 }
 
-export { PingTest, PingManager };
+export { PingTest };
