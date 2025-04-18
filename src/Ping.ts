@@ -47,7 +47,6 @@ class PingTest {
 				? teamSelectElement.value
 				: mainSelectElement?.value || "NA";
 
-		console.log("-----------------------------------------------------------", region)
 		const servers = [
 			{ region: "NA", url: "usr.mathsiscoolfun.com:8001" },
 			{ region: "EU", url: "eur.mathsiscoolfun.com:8001" },
@@ -84,7 +83,6 @@ class PingTest {
 	}
 
 	private startWebSocketPing() {
-		console.log(this.url)
 		if (this.ws || !this.url) return;
 
 		const ws = new WebSocket(this.url);

@@ -81,7 +81,6 @@ class HealthWarning {
 				// Utiliser la position sauvegardée
 				const { x, y } = JSON.parse(savedPosition);
 				position = { left: x, top: y };
-				console.log('Position LOW HP chargée:', position);
 			} catch (error) {
 				// En cas d'erreur, utiliser la position par défaut
 				position = this.kxsClient.defaultPositions[this.POSITION_KEY];
@@ -170,9 +169,6 @@ class HealthWarning {
 		if (span) {
 			span.textContent = 'LOW HP: Mode placement';
 		}
-
-		// Log feedback for the user
-		console.log('Mode placement LOW HP activé');
 	}
 
 	private disableDragging() {
@@ -202,8 +198,6 @@ class HealthWarning {
 				this.update(currentHealth);
 			}
 		}
-
-		console.log('Position du LOW HP mise à jour');
 	}
 
 	private handleMouseDown(event: MouseEvent) {
@@ -240,18 +234,17 @@ class HealthWarning {
 	private handleMouseUp() {
 		if (this.isDragging && this.warningElement) {
 			this.isDragging = false;
-			
+
 			// Récupérer les positions actuelles
 			const left = parseInt(this.warningElement.style.left);
 			const top = parseInt(this.warningElement.style.top);
-			
+
 			// Sauvegarder la position
 			const storageKey = `position_${this.POSITION_KEY}`;
 			localStorage.setItem(
-				storageKey, 
+				storageKey,
 				JSON.stringify({ x: left, y: top })
 			);
-			console.log('Position LOW HP sauvegardée:', { x: left, y: top });
 		}
 	}
 

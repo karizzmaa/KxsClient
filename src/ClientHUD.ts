@@ -152,8 +152,6 @@ class KxsClientHUD {
 
 				// Check current content immediately
 				checkAllKillfeeds();
-
-				console.log("Friend detector initialized with 4-minute cache");
 			} else {
 				console.warn("Killfeed-contents element not found");
 			}
