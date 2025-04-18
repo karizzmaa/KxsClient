@@ -54,12 +54,12 @@ class DiscordWebSocket {
 				},
 				presence: {
 					activities: [{
-						name: "KxsClient",
+						name: "Survev.io",
 						type: 0,
-						application_id: "1321193265533550602",
+						application_id: "1362824290612805773",
 						assets: {
-							large_image: "mp:app-icons/1321193265533550602/bccd2479ec56ed7d4e69fa2fdfb47197.png?size=512",
-							large_text: "KxsClient v" + packageInfo.version,
+							large_image: "mp:app-icons/1362824290612805773/icon.png?size=512",
+							large_text: "Survev.io v" + packageInfo.version,
 						}
 					}],
 					status: 'online',
